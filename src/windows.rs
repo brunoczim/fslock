@@ -1,17 +1,10 @@
 #[cfg(not(feature = "std"))]
-use core::{
-    convert::TryFrom,
-    fmt::{self, Write},
-    slice,
-};
-#[cfg(not(feature = "std"))]
 use winapi::{
-    shared::minwindef::{DWORD, LPVOID, TRUE},
+    shared::minwindef::{DWORD, TRUE},
     um::{
         synchapi::WaitForSingleObject,
         winbase::{
             FormatMessageW,
-            LocalFree,
             FORMAT_MESSAGE_ALLOCATE_BUFFER,
             FORMAT_MESSAGE_FROM_SYSTEM,
             FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -22,9 +15,15 @@ use winapi::{
     },
 };
 
-use core::{mem::MaybeUninit, ptr};
+use core::{
+    convert::TryFrom,
+    fmt::{self, Write},
+    mem::MaybeUninit,
+    ptr::{self, NonNull},
+    slice,
+};
 use winapi::{
-    shared::winerror::ERROR_LOCK_VIOLATION,
+    shared::{minwindef::LPVOID, winerror::ERROR_LOCK_VIOLATION},
     um::{
         errhandlingapi::GetLastError,
         fileapi::{LockFileEx, UnlockFileEx},
@@ -35,6 +34,7 @@ use winapi::{
             LPOVERLAPPED,
             OVERLAPPED,
         },
+        winbase::LocalFree,
         winnt::HANDLE,
     },
 };
@@ -107,6 +107,146 @@ impl fmt::Display for Error {
     }
 }
 
+/// Owned allocation of an OS-native string.
+pub struct OsString {
+    alloc: NonNull<u16>,
+    /// Length without the nul-byte.
+    len: usize,
+}
+
+impl Drop for OsString {
+    fn drop(&mut self) {
+        let ptr = self.alloc.as_ptr() as LPVOID;
+        unsafe { LocalFree(ptr) }
+    }
+}
+
+impl AsRef<OsStr> for OsString {
+    fn as_ref(&self) -> &OsStr {
+        unsafe {
+            OsStr::from_slice(slice::from_raw_parts(
+                self.alloc.as_ptr(),
+                self.len,
+            ))
+        }
+    }
+}
+
+/// Borrowed allocation of an OS-native string.
+pub struct OsStr {
+    chars: [u16],
+}
+
+impl fmt::Debug for OsStr {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let mut first = false;
+        write!(fmt, "[")?;
+
+        for &signed in &self.bytes {
+            let byte = signed as u8;
+            if first {
+                first = false;
+            } else {
+                write!(fmt, ", ")?;
+            }
+            if (byte).is_ascii() {
+                write!(fmt, "{:?}", char::from(byte))?;
+            } else {
+                write!(fmt, "'\\x{:x}'", byte)?;
+            }
+        }
+
+        write!(fmt, "]")?;
+        Ok(())
+    }
+}
+
+impl fmt::Display for OsStr {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        let mut suplement = false;
+        let mut prev = 0;
+        for &code in self.chars {
+            if suplement {
+                let high = prev as u32 - 0xD800;
+                let low = code as u32 - 0xDC00;
+                let ch = char::try_from((high << 10 | low) + 0x10000)
+                    .expect("Inconsistent char implementation");
+                write!(fmt, "{}", ch)?;
+            } else if code <= 0xD7Ff || code >= 0xE000 {
+                let ch = char::try_from(code as u32)
+                    .expect("Inconsistent char implementation");
+                write!(fmt, "{}", ch)?;
+            } else {
+                suplement = true;
+                prev = code;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl<'str> IntoOsString for &'str OsStr {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        let len = unsafe { libc::strlen(self.bytes.as_ptr()) };
+        let alloc = unsafe { libc::malloc(len + 1) };
+        let alloc = match NonNull::new(alloc as *mut i8) {
+            Some(alloc) => alloc,
+            None => {
+                return Err(Error::last_os_error());
+            },
+        };
+        unsafe {
+            libc::memcpy(
+                alloc.as_ptr() as *mut libc::c_void,
+                self.bytes.as_ptr() as *const libc::c_void,
+                len + 1,
+            );
+        }
+
+        Ok(OsString { alloc, len })
+    }
+}
+
+impl ToOsStr for str {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        make_os_str(self.as_bytes())
+    }
+}
+
+/// Path must not contain a nul-byte in the middle, but a nul-byte in the end
+/// (and only in the end) is allowed, which in this case no extra allocation
+/// will be made. Otherwise, an extra allocation is made.
+fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
+    if let Some((&last, init)) = slice.split_last() {
+        if init.contains(&0) {
+            panic!("Path to file cannot contain nul-byte in the middle");
+        }
+        if last == 0 {
+            let str = unsafe { OsStr::from_slice(transmute(slice)) };
+            return Ok(EitherOsStr::Borrowed(str));
+        }
+    }
+
+    let alloc = unsafe { libc::malloc(slice.len() + 1) };
+    let alloc = match NonNull::new(alloc as *mut i8) {
+        Some(alloc) => alloc,
+        None => {
+            return Err(Error::last_os_error());
+        },
+    };
+    unsafe {
+        libc::memcpy(
+            alloc.as_ptr() as *mut libc::c_void,
+            slice.as_ptr() as *const libc::c_void,
+            slice.len(),
+        );
+        *alloc.as_ptr().add(slice.len()) = 0;
+    }
+
+    Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
+}
+
 #[cfg(not(feature = "std"))]
 fn write_wide_str<W>(fmt: &mut W, string: &[u16]) -> fmt::Result
 where
@@ -138,7 +278,7 @@ where
 /// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the
 /// end (and only in the end) is allowed, which in this case no extra allocation
 /// will be made. Otherwise, an extra allocation is made.
-pub fn open(path: &[u8]) -> Result<FileDesc, Error> {
+pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     unimplemented!()
 }
 
@@ -245,7 +385,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
 /// Removes a file. Path must not contain a nul-byte in the middle, but a
 /// nul-byte in the end (and only in the end) is allowed, which in this case no
 /// extra allocation will be made. Otherwise, an extra allocation is made.
-pub fn remove(path: &[u8]) -> Result<(), Error> {
+pub fn remove(path: &OsStr) -> Result<(), Error> {
     unimplemented!()
 }
 
