@@ -269,14 +269,14 @@ impl Drop for FileLock {
 #[cfg(feature = "std")]
 #[derive(Debug)]
 /// A handle to a file that is lockable. Deletes the file on drop. However,
-/// while there are handles to this file open, it will not be deleted. The
+/// while there are open handles to this file, it will not be deleted. The
 /// deletion will happen after all handles/file descriptors are closed.
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
-/// use fslock::SelfDestroyFileLock;
+/// use fslock::TempFileLock;
 ///
-/// let mut file = SelfDestroyFileLock::open("mylock")?;
+/// let mut file = TempFileLock::open("mylock")?;
 /// file.lock()?;
 /// do_stuff();
 /// file.unlock()?;
@@ -287,13 +287,13 @@ impl Drop for FileLock {
 /// #    // doing stuff here.
 /// # }
 /// ```
-pub struct SelfDestroyFileLock {
+pub struct TempFileLock {
     inner: FileLock,
     name: Vec<u8>,
 }
 
 #[cfg(feature = "std")]
-impl SelfDestroyFileLock {
+impl TempFileLock {
     /// Opens a file for locking. Even if the path contains a trailing nul-byte
     /// (0), an extra allocation will be made to store the path, so that one can
     /// remove it on drop.
@@ -305,9 +305,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     ///
     /// # Ok(())
     /// # }
@@ -317,9 +317,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock\0")?;
+    /// let mut file = TempFileLock::open("mylock\0")?;
     ///
     /// # Ok(())
     /// # }
@@ -329,9 +329,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("my\0lock")?;
+    /// let mut file = TempFileLock::open("my\0lock")?;
     ///
     /// # Ok(())
     /// # }
@@ -359,9 +359,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -377,9 +377,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// file.lock()?;
     /// file.lock()?;
     ///
@@ -402,9 +402,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// if file.try_lock()? {
     ///     do_stuff();
     ///     file.unlock()?;
@@ -421,9 +421,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -438,10 +438,10 @@ impl SelfDestroyFileLock {
     ///
     /// # Example
     /// ```
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     /// # fn main() -> Result<(), fslock::Error> {
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// do_stuff_with_lock(&mut file);
     /// if !file.owns_lock() {
     ///     file.lock()?;
@@ -451,7 +451,7 @@ impl SelfDestroyFileLock {
     ///
     /// # Ok(())
     /// # }
-    /// # fn do_stuff_with_lock(_lock: &mut SelfDestroyFileLock) {
+    /// # fn do_stuff_with_lock(_lock: &mut TempFileLock) {
     /// #    // doing stuff here.
     /// # }
     /// # fn do_stuff() {
@@ -472,9 +472,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -490,9 +490,9 @@ impl SelfDestroyFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::SelfDestroyFileLock;
+    /// use fslock::TempFileLock;
     ///
-    /// let mut file = SelfDestroyFileLock::open("mylock")?;
+    /// let mut file = TempFileLock::open("mylock")?;
     /// file.unlock()?;
     ///
     /// # Ok(())
@@ -504,8 +504,9 @@ impl SelfDestroyFileLock {
 }
 
 #[cfg(feature = "std")]
-impl Drop for SelfDestroyFileLock {
+impl Drop for TempFileLock {
     fn drop(&mut self) {
+        // We'll have to ignore this error.
         let _ = sys::remove(&self.name);
     }
 }

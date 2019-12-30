@@ -9,7 +9,7 @@ libc = "^0.2.66"
 
 [target.'cfg(windows)'.dependencies.winapi]
 version = "^0.3.8"
-features = ["fileapi"]
+features = ["winbase", "errhandlingapi", "winnt", "fileapi"]
 
 [features]
 default = ["std"]
