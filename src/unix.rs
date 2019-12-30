@@ -52,9 +52,26 @@ impl fmt::Display for Error {
         let msg_ptr = unsafe { libc::strerror(self.code as libc::c_int) };
         let len = unsafe { libc::strlen(msg_ptr) };
         let slice = unsafe { slice::from_raw_parts(msg_ptr as _, len) };
-        let string = str::from_utf8(slice).expect("Libc must be ascii");
 
-        write!(fmt, "{}", string)
+        let mut sub = slice;
+
+        while sub.len() > 0 {
+            match str::from_utf8(sub) {
+                Ok(string) => {
+                    write!(fmt, "{}", string)?;
+                    sub = &[];
+                },
+                Err(err) => {
+                    let string = str::from_utf8(&sub[.. err.valid_up_to()])
+                        .expect("Inconsistent utf8 error");
+                    write!(fmt, "{}�", string,)?;
+
+                    sub = &sub[err.valid_up_to() + 1 ..];
+                },
+            }
+        }
+
+        Ok(())
     }
 }
 
