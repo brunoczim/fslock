@@ -1,0 +1,12 @@
+[package]
+name = "fslock"
+version = "0.1.0"
+authors = ["brunoczim <brunoczim@gmail.com>"]
+edition = "2018"
+
+[target.'cfg(unix)'.dependencies]
+libc = "^0.2.66"
+
+[target.'cfg(windows)'.dependencies.winapi]
+version = "^0.3.8"
+features = ["fileapi"]
