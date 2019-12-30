@@ -1,6 +1,6 @@
 #[cfg(not(feature = "std"))]
 use core::{
-    fmt::{self, Write},
+    fmt::{self},
     slice,
     str,
 };
@@ -23,25 +23,25 @@ pub type Error = std::io::Error;
 
 #[cfg(not(feature = "std"))]
 #[derive(Debug)]
-/// An IO error.
+/// An IO error. Without std, you can only get a message or an OS error code.
 pub struct Error {
-    code: u32,
+    code: i32,
 }
 
 #[cfg(not(feature = "std"))]
 impl Error {
     /// Creates an error from a raw OS error code.
-    pub fn from_raw_os_error(code: u32) -> Self {
+    pub fn from_raw_os_error(code: i32) -> Self {
         Self { code }
     }
 
     /// Creates an error from the last OS error code.
     pub fn last_os_error() -> Error {
-        Self::from_raw_os_error(unsafe { *libc::__errno_location() as u32 })
+        Self::from_raw_os_error(unsafe { *libc::__errno_location() as i32 })
     }
 
     /// Raw OS error code. Returns option for compatibility with std.
-    pub fn raw_os_error(&self) -> Option<u32> {
+    pub fn raw_os_error(&self) -> Option<i32> {
         Some(self.code)
     }
 }
@@ -51,9 +51,8 @@ impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let msg_ptr = unsafe { libc::strerror(self.code as libc::c_int) };
         let len = unsafe { libc::strlen(msg_ptr) };
-        let slice = unsafe { core::slice::from_raw_parts(msg_ptr as _, len) };
-        let string =
-            unsafe { core::str::from_utf8(slice).expect("Libc must be ascii") };
+        let slice = unsafe { slice::from_raw_parts(msg_ptr as _, len) };
+        let string = str::from_utf8(slice).expect("Libc must be ascii");
 
         write!(fmt, "{}", string)
     }
@@ -131,7 +130,7 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
         if err == libc::EACCES || err == libc::EAGAIN {
             Ok(false)
         } else {
-            Err(Error::from_raw_os_error(err as u32))
+            Err(Error::from_raw_os_error(err as i32))
         }
     }
 }
