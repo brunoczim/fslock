@@ -10,7 +10,14 @@ mod windows;
 #[cfg(windows)]
 use crate::windows as sys;
 
-pub use crate::sys::Error;
+pub use crate::sys::{
+    EitherOsStr,
+    Error,
+    IntoOsString,
+    OsStr,
+    OsString,
+    ToOsStr,
+};
 
 #[derive(Debug)]
 /// A handle to a file that is lockable. Does not delete the file.
@@ -36,8 +43,8 @@ pub struct FileLock {
 }
 
 impl FileLock {
-    /// Opens a file for locking. If the path is not nul-terminated (ends with
-    /// 0), an extra allocation will be made.
+    /// Opens a file for locking. On Unix, if the path is nul-terminated (ends
+    /// with 0), no extra allocation will be made.
     ///
     /// # Panics
     /// Panics if the path contains a nul-byte in a place other than the end.
@@ -49,18 +56,6 @@ impl FileLock {
     /// use fslock::FileLock;
     ///
     /// let mut file = FileLock::open("mylock")?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Example Without Extra Allocation
-    ///
-    /// ```
-    /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
-    ///
-    /// let mut file = FileLock::open("mylock\0")?;
     ///
     /// # Ok(())
     /// # }
@@ -79,8 +74,9 @@ impl FileLock {
     /// ```
     pub fn open<P>(path: &P) -> Result<Self, Error>
     where
-        P: AsRef<[u8]> + ?Sized,
+        P: ToOsStr + ?Sized,
     {
+        let path = path.to_os_str()?;
         let desc = sys::open(path.as_ref())?;
         Ok(Self { locked: false, desc })
     }
@@ -289,14 +285,12 @@ impl Drop for FileLock {
 /// ```
 pub struct TempFileLock {
     inner: FileLock,
-    name: Vec<u8>,
+    path: OsString,
 }
 
 #[cfg(feature = "std")]
 impl TempFileLock {
-    /// Opens a file for locking. Even if the path contains a trailing nul-byte
-    /// (0), an extra allocation will be made to store the path, so that one can
-    /// remove it on drop.
+    /// Opens a file for locking. Removes the file on drop.
     ///
     /// # Panics
     /// Panics if the path contains a nul-byte in a place other than the end.
@@ -308,18 +302,6 @@ impl TempFileLock {
     /// use fslock::TempFileLock;
     ///
     /// let mut file = TempFileLock::open("mylock")?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Example Without Extra Allocation
-    ///
-    /// ```
-    /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
-    ///
-    /// let mut file = TempFileLock::open("mylock\0")?;
     ///
     /// # Ok(())
     /// # }
@@ -338,14 +320,11 @@ impl TempFileLock {
     /// ```
     pub fn open<P>(path: P) -> Result<Self, Error>
     where
-        P: Into<Vec<u8>>,
+        P: IntoOsString,
     {
-        let mut path = path.into();
-        if path.last() != Some(&0) {
-            path.push(0);
-        }
+        let path = path.into_os_string()?;
         let inner = FileLock::open(&path)?;
-        Ok(Self { inner, name: path })
+        Ok(Self { inner, path })
     }
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
@@ -507,6 +486,6 @@ impl TempFileLock {
 impl Drop for TempFileLock {
     fn drop(&mut self) {
         // We'll have to ignore this error.
-        let _ = sys::remove(&self.name);
+        let _ = sys::remove(&self.path);
     }
 }

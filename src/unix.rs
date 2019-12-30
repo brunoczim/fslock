@@ -1,11 +1,4 @@
-#[cfg(not(feature = "std"))]
-use core::{
-    fmt::{self},
-    slice,
-    str,
-};
-
-use core::{mem::transmute, ops::Deref, ptr::NonNull};
+use core::{fmt, mem::transmute, ops::Deref, ptr::NonNull, slice, str};
 
 extern "C" {
     /// [Linux man page](https://linux.die.net/man/3/lockf)
@@ -68,12 +61,6 @@ impl Drop for OsString {
     }
 }
 
-impl AsRef<OsStr> for OsString {
-    fn as_ref(&self) -> &OsStr {
-        unsafe { transmute(self.alloc.as_ref()) }
-    }
-}
-
 impl fmt::Debug for OsString {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "{:?}", self.as_ref())
@@ -83,6 +70,12 @@ impl fmt::Debug for OsString {
 impl fmt::Display for OsString {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "{}", self.as_ref())
+    }
+}
+
+impl AsRef<OsStr> for OsString {
+    fn as_ref(&self) -> &OsStr {
+        unsafe { transmute(self.alloc.as_ref()) }
     }
 }
 
@@ -159,6 +152,23 @@ pub enum EitherOsStr<'str> {
     Owned(OsString),
 }
 
+impl<'str> AsRef<OsStr> for EitherOsStr<'str> {
+    fn as_ref(&self) -> &OsStr {
+        match self {
+            Self::Borrowed(str) => str,
+            Self::Owned(string) => string.as_ref(),
+        }
+    }
+}
+
+impl<'str> Deref for EitherOsStr<'str> {
+    type Target = OsStr;
+
+    fn deref(&self) -> &OsStr {
+        self.as_ref()
+    }
+}
+
 /// Conversion of anything into an owned OS-native string. If allocation fails,
 /// an error shall be returned.
 pub trait IntoOsString {
@@ -174,7 +184,7 @@ impl IntoOsString for OsString {
 
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
-        let len = libc::strlen(self.phantom.as_ptr());
+        let len = unsafe { libc::strlen(self.phantom.as_ptr()) };
         let alloc = unsafe { libc::malloc(len + 1) };
         let alloc = match NonNull::new(alloc as *mut i8) {
             Some(alloc) => alloc,
