@@ -268,7 +268,9 @@ impl Drop for FileLock {
 
 #[cfg(feature = "std")]
 #[derive(Debug)]
-/// A handle to a file that is lockable. Deletes the file on drop.
+/// A handle to a file that is lockable. Deletes the file on drop. However,
+/// while there are handles to this file open, it will not be deleted. The
+/// deletion will happen after all handles/file descriptors are closed.
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
