@@ -45,7 +45,9 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let msg_ptr = unsafe { libc::strerror(self.code as libc::c_int) };
-        write!(fmt, "{}", unsafe { &*(msg_ptr as *const OsStr) })?;
+        let len = unsafe { libc::strlen(msg_ptr) };
+        let slice = unsafe { slice::from_raw_parts(msg_ptr, len) };
+        write!(fmt, "{}", unsafe { OsStr::from_slice(slice) })?;
         Ok(())
     }
 }
@@ -53,11 +55,14 @@ impl fmt::Display for Error {
 /// Owned allocation of an OS-native string.
 pub struct OsString {
     alloc: NonNull<i8>,
+    /// Length without the nul-byte.
+    len: usize,
 }
 
 impl Drop for OsString {
     fn drop(&mut self) {
-        unsafe { libc::free(self.alloc.as_ptr() as *mut libc::c_void) }
+        let ptr = self.alloc.as_ptr() as *mut libc::c_void;
+        unsafe { libc::free(ptr) }
     }
 }
 
@@ -75,7 +80,12 @@ impl fmt::Display for OsString {
 
 impl AsRef<OsStr> for OsString {
     fn as_ref(&self) -> &OsStr {
-        unsafe { transmute(self.alloc.as_ref()) }
+        unsafe {
+            OsStr::from_slice(slice::from_raw_parts(
+                self.alloc.as_ptr(),
+                self.len,
+            ))
+        }
     }
 }
 
@@ -90,23 +100,32 @@ impl Deref for OsString {
 /// Borrowed allocation of an OS-native string.
 #[repr(transparent)]
 pub struct OsStr {
-    phantom: [i8; 1],
+    bytes: [i8],
+}
+
+impl OsStr {
+    /// Unsafe cause sequence needs to end with 0.
+    unsafe fn from_slice(slice: &[i8]) -> &Self {
+        transmute(slice)
+    }
 }
 
 impl fmt::Debug for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut first = false;
-        let ptr = self.phantom.as_ptr();
         write!(fmt, "[")?;
 
-        unsafe {
-            while *ptr != 0 {
-                if first {
-                    first = false;
-                } else {
-                    write!(fmt, ", ")?;
-                }
-                write!(fmt, "{:?}", *ptr)?;
+        for &signed in &self.bytes {
+            let byte = signed as u8;
+            if first {
+                first = false;
+            } else {
+                write!(fmt, ", ")?;
+            }
+            if (byte).is_ascii() {
+                write!(fmt, "{:?}", char::from(byte))?;
+            } else {
+                write!(fmt, "'\\x{:x}'", byte)?;
             }
         }
 
@@ -117,7 +136,7 @@ impl fmt::Debug for OsStr {
 
 impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let ptr = self.phantom.as_ptr();
+        let ptr = self.bytes.as_ptr();
         let len = unsafe { libc::strlen(ptr) };
         let slice = unsafe { slice::from_raw_parts(ptr as _, len) };
 
@@ -184,7 +203,7 @@ impl IntoOsString for OsString {
 
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
-        let len = unsafe { libc::strlen(self.phantom.as_ptr()) };
+        let len = unsafe { libc::strlen(self.bytes.as_ptr()) };
         let alloc = unsafe { libc::malloc(len + 1) };
         let alloc = match NonNull::new(alloc as *mut i8) {
             Some(alloc) => alloc,
@@ -195,12 +214,12 @@ impl<'str> IntoOsString for &'str OsStr {
         unsafe {
             libc::memcpy(
                 alloc.as_ptr() as *mut libc::c_void,
-                self.phantom.as_ptr() as *const libc::c_void,
+                self.bytes.as_ptr() as *const libc::c_void,
                 len + 1,
             );
         }
 
-        Ok(OsString { alloc })
+        Ok(OsString { alloc, len })
     }
 }
 
@@ -253,7 +272,8 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
             panic!("Path to file cannot contain nul-byte in the middle");
         }
         if last == 0 {
-            return Ok(EitherOsStr::Borrowed(unsafe { transmute(&slice[0]) }));
+            let str = unsafe { OsStr::from_slice(transmute(slice)) };
+            return Ok(EitherOsStr::Borrowed(str));
         }
     }
 
@@ -273,7 +293,7 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
         *alloc.as_ptr().add(slice.len()) = 0;
     }
 
-    Ok(EitherOsStr::Owned(OsString { alloc }))
+    Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
 }
 
 /// Opens a file with only purpose of locking it. Creates it if it does not
@@ -283,7 +303,7 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
 pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     let fd = unsafe {
         libc::open(
-            path.phantom.as_ptr(),
+            path.bytes.as_ptr(),
             libc::O_WRONLY | libc::O_CLOEXEC | libc::O_CREAT,
             libc::S_IRUSR | libc::S_IWUSR | libc::S_IRGRP | libc::S_IROTH,
         )
@@ -335,7 +355,7 @@ pub fn unlock(fd: FileDesc) -> Result<(), Error> {
 /// nul-byte in the end (and only in the end) is allowed, which in this case no
 /// extra allocation will be made. Otherwise, an extra allocation is made.
 pub fn remove(path: &OsStr) -> Result<(), Error> {
-    let res = unsafe { libc::remove(path.phantom.as_ptr()) };
+    let res = unsafe { libc::remove(path.bytes.as_ptr()) };
     if res == 0 {
         Ok(())
     } else {

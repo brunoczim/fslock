@@ -262,7 +262,6 @@ impl Drop for FileLock {
     }
 }
 
-#[cfg(feature = "std")]
 #[derive(Debug)]
 /// A handle to a file that is lockable. Deletes the file on drop. However,
 /// while there are open handles to this file, it will not be deleted. The
@@ -288,7 +287,6 @@ pub struct TempFileLock {
     path: OsString,
 }
 
-#[cfg(feature = "std")]
 impl TempFileLock {
     /// Opens a file for locking. Removes the file on drop.
     ///
@@ -482,7 +480,6 @@ impl TempFileLock {
     }
 }
 
-#[cfg(feature = "std")]
 impl Drop for TempFileLock {
     fn drop(&mut self) {
         // We'll have to ignore this error.
