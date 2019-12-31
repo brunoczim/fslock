@@ -149,18 +149,30 @@ impl OsStr {
 impl fmt::Debug for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut first = false;
+        let mut suplement = false;
+        let mut prev = 0;
         write!(fmt, "[")?;
 
         for &char in &self.chars {
             if first {
                 first = false;
-            } else {
+            } else if !suplement {
                 write!(fmt, ", ")?;
             }
-            if (char as u8).is_ascii_alphanumeric() {
-                write!(fmt, "{:?}", char::from(char as u8))?;
+
+            if suplement {
+                let high = prev as u32 - 0xD800;
+                let low = code as u32 - 0xDC00;
+                let ch = char::try_from((high << 10 | low) + 0x10000)
+                    .expect("Inconsistent char implementation");
+                write!(fmt, "{:?}", ch)?;
+            } else if code <= 0xD7FF || code >= 0xE000 {
+                let ch = char::try_from(code as u32)
+                    .expect("Inconsistent char implementation");
+                write!(fmt, "{:?}", ch)?;
             } else {
-                write!(fmt, "'\\x{:x}'", char)?;
+                suplement = true;
+                prev = code;
             }
         }
 
@@ -180,7 +192,7 @@ impl fmt::Display for OsStr {
                 let ch = char::try_from((high << 10 | low) + 0x10000)
                     .expect("Inconsistent char implementation");
                 write!(fmt, "{}", ch)?;
-            } else if code <= 0xD7Ff || code >= 0xE000 {
+            } else if code <= 0xD7FF || code >= 0xE000 {
                 let ch = char::try_from(code as u32)
                     .expect("Inconsistent char implementation");
                 write!(fmt, "{}", ch)?;
@@ -198,7 +210,7 @@ impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = unsafe { libc::strlen(self.bytes.as_ptr()) };
         let alloc = unsafe { libc::malloc(len + 1) };
-        let alloc = match NonNull::new(alloc as *mut i8) {
+        let alloc = match NonNull::new(alloc as *mut WCHAR) {
             Some(alloc) => alloc,
             None => {
                 return Err(Error::last_os_error());
@@ -208,7 +220,7 @@ impl<'str> IntoOsString for &'str OsStr {
             libc::memcpy(
                 alloc.as_ptr() as *mut libc::c_void,
                 self.bytes.as_ptr() as *const libc::c_void,
-                len + 1,
+                len * 2 + 2,
             );
         }
 
@@ -240,33 +252,6 @@ impl ToOsStr for str {
         let string = OsString { alloc, len };
         Ok(EiteherOsStr::Owned(string))
     }
-}
-
-#[cfg(not(feature = "std"))]
-fn write_wide_str<W>(fmt: &mut W, string: &[WCHAR]) -> fmt::Result
-where
-    W: Write,
-{
-    let mut suplement = false;
-    let mut prev = 0;
-    for &code in string {
-        if suplement {
-            let high = prev as u32 - 0xD800;
-            let low = code as u32 - 0xDC00;
-            let ch = char::try_from((high << 10 | low) + 0x10000)
-                .expect("Inconsistent char implementation");
-            write!(fmt, "{}", ch)?;
-        } else if code <= 0xD7Ff || code >= 0xE000 {
-            let ch = char::try_from(code as u32)
-                .expect("Inconsistent char implementation");
-            write!(fmt, "{}", ch)?;
-        } else {
-            suplement = true;
-            prev = code;
-        }
-    }
-
-    Ok(())
 }
 
 /// Opens a file with only purpose of locking it. Creates it if it does not

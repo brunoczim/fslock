@@ -103,7 +103,7 @@ impl fmt::Debug for OsStr {
             } else {
                 write!(fmt, ", ")?;
             }
-            if (byte).is_ascii_alphanumeric() {
+            if byte.is_ascii() {
                 write!(fmt, "{:?}", char::from(byte))?;
             } else {
                 write!(fmt, "'\\x{:x}'", byte)?;
