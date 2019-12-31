@@ -15,6 +15,7 @@ use winapi::{
     },
 };
 
+use crate::{EitherOsStr, IntoOsString, ToOsStr};
 use core::{
     convert::TryFrom,
     fmt::{self, Write},
@@ -29,13 +30,14 @@ use winapi::{
         fileapi::{LockFileEx, UnlockFileEx},
         handleapi::CloseHandle,
         minwinbase::{
+            LMEM_FIXED,
             LOCKFILE_EXCLUSIVE_LOCK,
             LOCKFILE_FAIL_IMMEDIATELY,
             LPOVERLAPPED,
             OVERLAPPED,
         },
-        winbase::LocalFree,
-        winnt::HANDLE,
+        winbase::{LocalAlloc, LocalFree},
+        winnt::{HANDLE, WCHAR},
     },
 };
 
@@ -94,7 +96,7 @@ impl fmt::Display for Error {
         } else {
             {
                 let slice = unsafe {
-                    slice::from_raw_parts(buf as *const u16, res as usize)
+                    slice::from_raw_parts(buf as *const WCHAR, res as usize)
                 };
                 write_wide_str(fmt, slice)?;
             }
@@ -109,7 +111,7 @@ impl fmt::Display for Error {
 
 /// Owned allocation of an OS-native string.
 pub struct OsString {
-    alloc: NonNull<u16>,
+    alloc: NonNull<WCHAR>,
     /// Length without the nul-byte.
     len: usize,
 }
@@ -134,7 +136,14 @@ impl AsRef<OsStr> for OsString {
 
 /// Borrowed allocation of an OS-native string.
 pub struct OsStr {
-    chars: [u16],
+    chars: [WCHAR],
+}
+
+impl OsStr {
+    /// Unsafe cause sequence needs to end with 0.
+    unsafe fn from_slice(slice: &[WCHAR]) -> &Self {
+        transmute(slice)
+    }
 }
 
 impl fmt::Debug for OsStr {
@@ -142,17 +151,16 @@ impl fmt::Debug for OsStr {
         let mut first = false;
         write!(fmt, "[")?;
 
-        for &signed in &self.bytes {
-            let byte = signed as u8;
+        for &char in &self.chars {
             if first {
                 first = false;
             } else {
                 write!(fmt, ", ")?;
             }
-            if (byte).is_ascii() {
-                write!(fmt, "{:?}", char::from(byte))?;
+            if (char as u8).is_ascii_alphanumeric() {
+                write!(fmt, "{:?}", char::from(char as u8))?;
             } else {
-                write!(fmt, "'\\x{:x}'", byte)?;
+                write!(fmt, "'\\x{:x}'", char)?;
             }
         }
 
@@ -210,45 +218,32 @@ impl<'str> IntoOsString for &'str OsStr {
 
 impl ToOsStr for str {
     fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        make_os_str(self.as_bytes())
-    }
-}
+        let len = self.encode_utf16().count();
+        let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2 + 2) };
+        let alloc = match NonNull::new(alloc as *mut WCHAR) {
+            Some(alloc) => alloc,
+            None => {
+                return Err(Error::last_os_error());
+            },
+        };
 
-/// Path must not contain a nul-byte in the middle, but a nul-byte in the end
-/// (and only in the end) is allowed, which in this case no extra allocation
-/// will be made. Otherwise, an extra allocation is made.
-fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
-    if let Some((&last, init)) = slice.split_last() {
-        if init.contains(&0) {
-            panic!("Path to file cannot contain nul-byte in the middle");
+        let mut iter = self.encode_utf16();
+        for i in 0 .. len {
+            let ch = iter.next().expect("Inconsistent .encode_utf16()");
+            unsafe {
+                *alloc.as_ptr().add(i) = ch;
+            }
         }
-        if last == 0 {
-            let str = unsafe { OsStr::from_slice(transmute(slice)) };
-            return Ok(EitherOsStr::Borrowed(str));
+        unsafe {
+            *alloc.as_ptr().add(len) = 0;
         }
+        let string = OsString { alloc, len };
+        Ok(EiteherOsStr::Owned(string))
     }
-
-    let alloc = unsafe { libc::malloc(slice.len() + 1) };
-    let alloc = match NonNull::new(alloc as *mut i8) {
-        Some(alloc) => alloc,
-        None => {
-            return Err(Error::last_os_error());
-        },
-    };
-    unsafe {
-        libc::memcpy(
-            alloc.as_ptr() as *mut libc::c_void,
-            slice.as_ptr() as *const libc::c_void,
-            slice.len(),
-        );
-        *alloc.as_ptr().add(slice.len()) = 0;
-    }
-
-    Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
 }
 
 #[cfg(not(feature = "std"))]
-fn write_wide_str<W>(fmt: &mut W, string: &[u16]) -> fmt::Result
+fn write_wide_str<W>(fmt: &mut W, string: &[WCHAR]) -> fmt::Result
 where
     W: Write,
 {
