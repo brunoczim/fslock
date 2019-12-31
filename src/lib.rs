@@ -10,6 +10,9 @@ mod windows;
 #[cfg(windows)]
 use crate::windows as sys;
 
+#[cfg(test)]
+mod test;
+
 pub use crate::sys::{Error, OsStr, OsString};
 use core::{fmt, ops::Deref};
 
@@ -111,9 +114,9 @@ impl ToOsStr for OsString {
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
-/// use fslock::FileLock;
+/// use fslock::LockFile;
 ///
-/// let mut file = FileLock::open("mylock")?;
+/// let mut file = LockFile::open("mylock")?;
 /// file.lock()?;
 /// do_stuff();
 /// file.unlock()?;
@@ -124,12 +127,12 @@ impl ToOsStr for OsString {
 /// #    // doing stuff here.
 /// # }
 /// ```
-pub struct FileLock {
+pub struct LockFile {
     locked: bool,
     desc: sys::FileDesc,
 }
 
-impl FileLock {
+impl LockFile {
     /// Opens a file for locking. On Unix, if the path is nul-terminated (ends
     /// with 0), no extra allocation will be made.
     ///
@@ -140,9 +143,9 @@ impl FileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     ///
     /// # Ok(())
     /// # }
@@ -152,9 +155,9 @@ impl FileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("my\0lock")?;
+    /// let mut file = LockFile::open("my\0lock")?;
     ///
     /// # Ok(())
     /// # }
@@ -179,9 +182,9 @@ impl FileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -197,9 +200,9 @@ impl FileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// file.lock()?;
     /// file.lock()?;
     ///
@@ -227,9 +230,9 @@ impl FileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// if file.try_lock()? {
     ///     do_stuff();
     ///     file.unlock()?;
@@ -246,9 +249,9 @@ impl FileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -270,10 +273,10 @@ impl FileLock {
     ///
     /// # Example
     /// ```
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     /// # fn main() -> Result<(), fslock::Error> {
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// do_stuff_with_lock(&mut file);
     /// if !file.owns_lock() {
     ///     file.lock()?;
@@ -283,7 +286,7 @@ impl FileLock {
     ///
     /// # Ok(())
     /// # }
-    /// # fn do_stuff_with_lock(_lock: &mut FileLock) {
+    /// # fn do_stuff_with_lock(_lock: &mut LockFile) {
     /// #    // doing stuff here.
     /// # }
     /// # fn do_stuff() {
@@ -304,9 +307,9 @@ impl FileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -322,9 +325,9 @@ impl FileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::FileLock;
+    /// use fslock::LockFile;
     ///
-    /// let mut file = FileLock::open("mylock")?;
+    /// let mut file = LockFile::open("mylock")?;
     /// file.unlock()?;
     ///
     /// # Ok(())
@@ -340,7 +343,7 @@ impl FileLock {
     }
 }
 
-impl Drop for FileLock {
+impl Drop for LockFile {
     fn drop(&mut self) {
         if self.locked {
             let _ = sys::unlock(self.desc);
@@ -356,9 +359,9 @@ impl Drop for FileLock {
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
-/// use fslock::TempFileLock;
+/// use fslock::TempLockFile;
 ///
-/// let mut file = TempFileLock::open("mylock")?;
+/// let mut file = TempLockFile::open("mylock")?;
 /// file.lock()?;
 /// do_stuff();
 /// file.unlock()?;
@@ -369,12 +372,12 @@ impl Drop for FileLock {
 /// #    // doing stuff here.
 /// # }
 /// ```
-pub struct TempFileLock {
-    inner: FileLock,
+pub struct TempLockFile {
+    inner: LockFile,
     path: OsString,
 }
 
-impl TempFileLock {
+impl TempLockFile {
     /// Opens a file for locking. Removes the file on drop.
     ///
     /// # Panics
@@ -384,9 +387,9 @@ impl TempFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     ///
     /// # Ok(())
     /// # }
@@ -396,9 +399,9 @@ impl TempFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("my\0lock")?;
+    /// let mut file = TempLockFile::open("my\0lock")?;
     ///
     /// # Ok(())
     /// # }
@@ -408,7 +411,7 @@ impl TempFileLock {
         P: IntoOsString,
     {
         let path = path.into_os_string()?;
-        let inner = FileLock::open(&path)?;
+        let inner = LockFile::open(&path)?;
         Ok(Self { inner, path })
     }
 
@@ -423,9 +426,9 @@ impl TempFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -441,9 +444,9 @@ impl TempFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// file.lock()?;
     /// file.lock()?;
     ///
@@ -466,9 +469,9 @@ impl TempFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// if file.try_lock()? {
     ///     do_stuff();
     ///     file.unlock()?;
@@ -485,9 +488,9 @@ impl TempFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -502,10 +505,10 @@ impl TempFileLock {
     ///
     /// # Example
     /// ```
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     /// # fn main() -> Result<(), fslock::Error> {
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// do_stuff_with_lock(&mut file);
     /// if !file.owns_lock() {
     ///     file.lock()?;
@@ -515,7 +518,7 @@ impl TempFileLock {
     ///
     /// # Ok(())
     /// # }
-    /// # fn do_stuff_with_lock(_lock: &mut TempFileLock) {
+    /// # fn do_stuff_with_lock(_lock: &mut TempLockFile) {
     /// #    // doing stuff here.
     /// # }
     /// # fn do_stuff() {
@@ -536,9 +539,9 @@ impl TempFileLock {
     ///
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -554,9 +557,9 @@ impl TempFileLock {
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::TempFileLock;
+    /// use fslock::TempLockFile;
     ///
-    /// let mut file = TempFileLock::open("mylock")?;
+    /// let mut file = TempLockFile::open("mylock")?;
     /// file.unlock()?;
     ///
     /// # Ok(())
@@ -567,7 +570,7 @@ impl TempFileLock {
     }
 }
 
-impl Drop for TempFileLock {
+impl Drop for TempLockFile {
     fn drop(&mut self) {
         // We'll have to ignore this error.
         let _ = sys::remove(&self.path);
