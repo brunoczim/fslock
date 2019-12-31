@@ -118,7 +118,7 @@ impl fmt::Debug for OsStr {
 impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let ptr = self.bytes.as_ptr();
-        let len = unsafe { libc::strlen(ptr) };
+        let len = self.bytes.len();
         let slice = unsafe { slice::from_raw_parts(ptr as _, len) };
 
         let mut sub = slice;
@@ -145,7 +145,7 @@ impl fmt::Display for OsStr {
 
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
-        let len = unsafe { libc::strlen(self.bytes.as_ptr()) };
+        let len = self.bytes.len();
         let alloc = unsafe { libc::malloc(len + 1) };
         let alloc = match NonNull::new(alloc as *mut i8) {
             Some(alloc) => alloc,

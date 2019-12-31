@@ -1,43 +1,57 @@
 #[cfg(not(feature = "std"))]
-use winapi::{
-    shared::minwindef::{DWORD, TRUE},
-    um::{
-        synchapi::WaitForSingleObject,
-        winbase::{
-            FormatMessageW,
-            FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            FORMAT_MESSAGE_FROM_SYSTEM,
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-            WAIT_FAILED,
-        },
-        winnt::LANG_USER_DEFAULT,
-        winnt::LPWSTR,
+use winapi::um::{
+    winbase::{
+        FormatMessageW,
+        FORMAT_MESSAGE_ALLOCATE_BUFFER,
+        FORMAT_MESSAGE_FROM_SYSTEM,
+        FORMAT_MESSAGE_IGNORE_INSERTS,
     },
+    winnt::{LANG_USER_DEFAULT, LPWSTR},
 };
 
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
 use core::{
     convert::TryFrom,
-    fmt::{self, Write},
-    mem::MaybeUninit,
+    fmt,
+    mem::{transmute, MaybeUninit},
     ptr::{self, NonNull},
     slice,
 };
 use winapi::{
-    shared::{minwindef::LPVOID, winerror::ERROR_LOCK_VIOLATION},
+    shared::{
+        minwindef::{DWORD, FALSE, LPVOID, TRUE},
+        winerror::ERROR_LOCK_VIOLATION,
+    },
     um::{
         errhandlingapi::GetLastError,
-        fileapi::{LockFileEx, UnlockFileEx},
-        handleapi::CloseHandle,
+        fileapi::{
+            CreateFileW,
+            DeleteFileW,
+            LockFileEx,
+            UnlockFileEx,
+            CREATE_ALWAYS,
+        },
+        handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
             LMEM_FIXED,
             LOCKFILE_EXCLUSIVE_LOCK,
             LOCKFILE_FAIL_IMMEDIATELY,
             LPOVERLAPPED,
+            LPSECURITY_ATTRIBUTES,
             OVERLAPPED,
+            SECURITY_ATTRIBUTES,
         },
-        winbase::{LocalAlloc, LocalFree},
-        winnt::{HANDLE, WCHAR},
+        synchapi::WaitForSingleObject,
+        winbase::{LocalAlloc, LocalFree, WAIT_FAILED},
+        winnt::{
+            RtlCopyMemory,
+            FILE_SHARE_DELETE,
+            FILE_SHARE_READ,
+            FILE_SHARE_WRITE,
+            GENERIC_WRITE,
+            HANDLE,
+            WCHAR,
+        },
     },
 };
 
@@ -98,7 +112,8 @@ impl fmt::Display for Error {
                 let slice = unsafe {
                     slice::from_raw_parts(buf as *const WCHAR, res as usize)
                 };
-                write_wide_str(fmt, slice)?;
+                let str = unsafe { OsStr::from_slice(slice) };
+                write!(fmt, "{}", str)?;
             }
             unsafe {
                 LocalFree(buf as LPVOID);
@@ -119,7 +134,9 @@ pub struct OsString {
 impl Drop for OsString {
     fn drop(&mut self) {
         let ptr = self.alloc.as_ptr() as LPVOID;
-        unsafe { LocalFree(ptr) }
+        unsafe {
+            LocalFree(ptr);
+        }
     }
 }
 
@@ -144,36 +161,24 @@ impl OsStr {
     unsafe fn from_slice(slice: &[WCHAR]) -> &Self {
         transmute(slice)
     }
+
+    fn chars(&self) -> Chars {
+        Chars { inner: self.chars.iter() }
+    }
 }
 
 impl fmt::Debug for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut first = false;
-        let mut suplement = false;
-        let mut prev = 0;
         write!(fmt, "[")?;
 
-        for &char in &self.chars {
+        for ch in self.chars() {
             if first {
                 first = false;
-            } else if !suplement {
+            } else {
                 write!(fmt, ", ")?;
             }
-
-            if suplement {
-                let high = prev as u32 - 0xD800;
-                let low = code as u32 - 0xDC00;
-                let ch = char::try_from((high << 10 | low) + 0x10000)
-                    .expect("Inconsistent char implementation");
-                write!(fmt, "{:?}", ch)?;
-            } else if code <= 0xD7FF || code >= 0xE000 {
-                let ch = char::try_from(code as u32)
-                    .expect("Inconsistent char implementation");
-                write!(fmt, "{:?}", ch)?;
-            } else {
-                suplement = true;
-                prev = code;
-            }
+            write!(fmt, "{:?}", ch)?;
         }
 
         write!(fmt, "]")?;
@@ -183,23 +188,8 @@ impl fmt::Debug for OsStr {
 
 impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let mut suplement = false;
-        let mut prev = 0;
-        for &code in self.chars {
-            if suplement {
-                let high = prev as u32 - 0xD800;
-                let low = code as u32 - 0xDC00;
-                let ch = char::try_from((high << 10 | low) + 0x10000)
-                    .expect("Inconsistent char implementation");
-                write!(fmt, "{}", ch)?;
-            } else if code <= 0xD7FF || code >= 0xE000 {
-                let ch = char::try_from(code as u32)
-                    .expect("Inconsistent char implementation");
-                write!(fmt, "{}", ch)?;
-            } else {
-                suplement = true;
-                prev = code;
-            }
+        for ch in self.chars() {
+            write!(fmt, "{}", ch)?;
         }
 
         Ok(())
@@ -208,8 +198,8 @@ impl fmt::Display for OsStr {
 
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
-        let len = unsafe { libc::strlen(self.bytes.as_ptr()) };
-        let alloc = unsafe { libc::malloc(len + 1) };
+        let len = self.chars.len();
+        let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2 + 2) };
         let alloc = match NonNull::new(alloc as *mut WCHAR) {
             Some(alloc) => alloc,
             None => {
@@ -217,9 +207,9 @@ impl<'str> IntoOsString for &'str OsStr {
             },
         };
         unsafe {
-            libc::memcpy(
-                alloc.as_ptr() as *mut libc::c_void,
-                self.bytes.as_ptr() as *const libc::c_void,
+            RtlCopyMemory(
+                alloc.as_ptr() as LPVOID,
+                self.chars.as_ptr() as _,
                 len * 2 + 2,
             );
         }
@@ -250,7 +240,32 @@ impl ToOsStr for str {
             *alloc.as_ptr().add(len) = 0;
         }
         let string = OsString { alloc, len };
-        Ok(EiteherOsStr::Owned(string))
+        Ok(EitherOsStr::Owned(string))
+    }
+}
+
+#[derive(Debug)]
+struct Chars<'str> {
+    inner: slice::Iter<'str, WCHAR>,
+}
+
+impl<'str> Iterator for Chars<'str> {
+    type Item = char;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let curr = *self.inner.next()?;
+        if curr <= 0xD7FF || curr >= 0xE000 {
+            let ch = char::try_from(curr as u32)
+                .expect("Inconsistent char implementation");
+            Some(ch)
+        } else {
+            let next = *self.inner.next()?;
+            let high = curr as u32 - 0xD800;
+            let low = next as u32 - 0xDC00;
+            let ch = char::try_from((high << 10 | low) + 0x10000)
+                .expect("Inconsistent char implementation");
+            Some(ch)
+        }
     }
 }
 
@@ -259,7 +274,28 @@ impl ToOsStr for str {
 /// end (and only in the end) is allowed, which in this case no extra allocation
 /// will be made. Otherwise, an extra allocation is made.
 pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
-    unimplemented!()
+    let mut security = SECURITY_ATTRIBUTES {
+        nLength: 0,
+        lpSecurityDescriptor: ptr::null_mut(),
+        bInheritHandle: FALSE,
+    };
+    let handle = unsafe {
+        CreateFileW(
+            path.chars.as_ptr(),
+            GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            &mut security as LPSECURITY_ATTRIBUTES,
+            CREATE_ALWAYS,
+            0,
+            ptr::null_mut(),
+        )
+    };
+
+    if handle != INVALID_HANDLE_VALUE {
+        Ok(handle)
+    } else {
+        Err(Error::last_os_error())
+    }
 }
 
 /// Tries to lock a file and blocks until it is possible to lock.
@@ -366,7 +402,13 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
 /// nul-byte in the end (and only in the end) is allowed, which in this case no
 /// extra allocation will be made. Otherwise, an extra allocation is made.
 pub fn remove(path: &OsStr) -> Result<(), Error> {
-    unimplemented!()
+    let res = unsafe { DeleteFileW(path.chars.as_ptr()) };
+
+    if res == TRUE {
+        Ok(())
+    } else {
+        Err(Error::last_os_error())
+    }
 }
 
 /// Closes the file.
