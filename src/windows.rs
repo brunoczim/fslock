@@ -20,19 +20,14 @@ use core::{
 use winapi::{
     shared::{
         minwindef::{DWORD, FALSE, LPVOID, TRUE},
-        winerror::ERROR_LOCK_VIOLATION,
+        winerror::{ERROR_INVALID_DATA, ERROR_LOCK_VIOLATION},
     },
     um::{
         errhandlingapi::GetLastError,
-        fileapi::{
-            CreateFileW,
-            DeleteFileW,
-            LockFileEx,
-            UnlockFileEx,
-            CREATE_ALWAYS,
-        },
+        fileapi::{CreateFileW, LockFileEx, UnlockFileEx, CREATE_ALWAYS},
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
+            OVERLAPPED_u,
             LMEM_FIXED,
             LOCKFILE_EXCLUSIVE_LOCK,
             LOCKFILE_FAIL_IMMEDIATELY,
@@ -41,7 +36,7 @@ use winapi::{
             OVERLAPPED,
             SECURITY_ATTRIBUTES,
         },
-        synchapi::WaitForSingleObject,
+        synchapi::{CreateEventW, WaitForSingleObject},
         winbase::{LocalAlloc, LocalFree, WAIT_FAILED},
         winnt::{
             RtlCopyMemory,
@@ -220,7 +215,18 @@ impl<'str> IntoOsString for &'str OsStr {
 
 impl ToOsStr for str {
     fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        let len = self.encode_utf16().count();
+        let mut len = 0;
+        let mut prev_zero = false;
+        for ch in self.encode_utf16() {
+            if prev_zero {
+                Err(Error::from_raw_os_error(ERROR_INVALID_DATA as i32))?;
+            }
+            len += 1;
+            if ch == 0 {
+                prev_zero = true;
+            }
+        }
+
         let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2 + 2) };
         let alloc = match NonNull::new(alloc as *mut WCHAR) {
             Some(alloc) => alloc,
@@ -269,16 +275,58 @@ impl<'str> Iterator for Chars<'str> {
     }
 }
 
+/// Creates an event to be used by this implementation.
+fn make_event() -> Result<HANDLE, Error> {
+    let mut security = make_security_attributes();
+    let res = unsafe {
+        CreateEventW(
+            &mut security as LPSECURITY_ATTRIBUTES,
+            FALSE,
+            FALSE,
+            ptr::null_mut(),
+        )
+    };
+
+    if res != INVALID_HANDLE_VALUE {
+        Ok(res)
+    } else {
+        Err(Error::last_os_error())
+    }
+}
+
+/// Creates security attributes to be used with this implementation.
+fn make_security_attributes() -> SECURITY_ATTRIBUTES {
+    SECURITY_ATTRIBUTES {
+        nLength: 0,
+        lpSecurityDescriptor: ptr::null_mut(),
+        bInheritHandle: FALSE,
+    }
+}
+
+/// Creates an overlapped struct to be used with this implementation.
+fn make_overlapped() -> Result<OVERLAPPED, Error> {
+    Ok(OVERLAPPED {
+        Internal: 0,
+        InternalHigh: 0,
+        u: {
+            let mut uninit = MaybeUninit::<OVERLAPPED_u>::uninit();
+            unsafe {
+                let mut refer = (&mut *uninit.as_mut_ptr()).s_mut();
+                refer.Offset = 0;
+                refer.OffsetHigh = 0;
+                uninit.assume_init()
+            }
+        },
+        hEvent: make_event()?,
+    })
+}
+
 /// Opens a file with only purpose of locking it. Creates it if it does not
 /// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the
 /// end (and only in the end) is allowed, which in this case no extra allocation
 /// will be made. Otherwise, an extra allocation is made.
 pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
-    let mut security = SECURITY_ATTRIBUTES {
-        nLength: 0,
-        lpSecurityDescriptor: ptr::null_mut(),
-        bInheritHandle: FALSE,
-    };
+    let mut security = make_security_attributes();
     let handle = unsafe {
         CreateFileW(
             path.chars.as_ptr(),
@@ -300,14 +348,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
 
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(handle: FileDesc) -> Result<(), Error> {
-    let mut overlapped: OVERLAPPED =
-        unsafe { MaybeUninit::zeroed().assume_init() };
-    unsafe {
-        overlapped.u.s_mut().Offset = 0;
-        overlapped.u.s_mut().OffsetHigh = 0;
-    }
-    overlapped.hEvent = ptr::null_mut();
-
+    let mut overlapped = make_overlapped()?;
     let res = unsafe {
         LockFileEx(
             handle,
@@ -318,6 +359,7 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
             &mut overlapped as LPOVERLAPPED,
         )
     };
+
     if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
@@ -332,14 +374,7 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
 
 /// Tries to lock a file but returns as soon as possible if already locked.
 pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
-    let mut overlapped: OVERLAPPED =
-        unsafe { MaybeUninit::zeroed().assume_init() };
-    unsafe {
-        overlapped.u.s_mut().Offset = 0;
-        overlapped.u.s_mut().OffsetHigh = 0;
-    }
-    overlapped.hEvent = ptr::null_mut();
-
+    let mut overlapped = make_overlapped()?;
     let res = unsafe {
         LockFileEx(
             handle,
@@ -350,6 +385,7 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
             &mut overlapped as LPOVERLAPPED,
         )
     };
+
     if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
@@ -369,14 +405,7 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
 
 /// Unlocks the file.
 pub fn unlock(handle: FileDesc) -> Result<(), Error> {
-    let mut overlapped: OVERLAPPED =
-        unsafe { MaybeUninit::zeroed().assume_init() };
-    unsafe {
-        overlapped.u.s_mut().Offset = 0;
-        overlapped.u.s_mut().OffsetHigh = 0;
-    }
-    overlapped.hEvent = ptr::null_mut();
-
+    let mut overlapped = make_overlapped()?;
     let res = unsafe {
         UnlockFileEx(
             handle,
@@ -386,6 +415,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
             &mut overlapped as LPOVERLAPPED,
         )
     };
+
     if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
@@ -393,19 +423,6 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         } else {
             Err(Error::last_os_error())
         }
-    } else {
-        Err(Error::last_os_error())
-    }
-}
-
-/// Removes a file. Path must not contain a nul-byte in the middle, but a
-/// nul-byte in the end (and only in the end) is allowed, which in this case no
-/// extra allocation will be made. Otherwise, an extra allocation is made.
-pub fn remove(path: &OsStr) -> Result<(), Error> {
-    let res = unsafe { DeleteFileW(path.chars.as_ptr()) };
-
-    if res == TRUE {
-        Ok(())
     } else {
         Err(Error::last_os_error())
     }

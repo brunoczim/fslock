@@ -212,7 +212,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     let fd = unsafe {
         libc::open(
             path.bytes.as_ptr(),
-            libc::O_WRONLY | libc::O_CLOEXEC | libc::O_CREAT,
+            libc::O_RDWR | libc::O_CLOEXEC | libc::O_CREAT,
             libc::S_IRUSR | libc::S_IWUSR | libc::S_IRGRP | libc::S_IROTH,
         )
     };
@@ -252,18 +252,6 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
 /// Unlocks the file.
 pub fn unlock(fd: FileDesc) -> Result<(), Error> {
     let res = unsafe { lockf(fd, libc::F_ULOCK, 0) };
-    if res == 0 {
-        Ok(())
-    } else {
-        Err(Error::last_os_error())
-    }
-}
-
-/// Removes a file. Path must not contain a nul-byte in the middle, but a
-/// nul-byte in the end (and only in the end) is allowed, which in this case no
-/// extra allocation will be made. Otherwise, an extra allocation is made.
-pub fn remove(path: &OsStr) -> Result<(), Error> {
-    let res = unsafe { libc::remove(path.bytes.as_ptr()) };
     if res == 0 {
         Ok(())
     } else {
