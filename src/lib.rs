@@ -133,6 +133,17 @@ impl ToOsStr for OsString {
 
 #[derive(Debug)]
 /// A handle to a file that is lockable. Does not delete the file.
+///
+/// # Multiple Handles/Descriptors To The Same File
+/// Windows will treat each handle as having their own lock, while Unix will
+/// have locks on a file for the whole process. This means that on Windows you
+/// may open a file, lock it, open it again, and when you try yo lock the second
+/// handle, it will block until the first lock is released. Meanwhile, unix will
+/// look if your process already owns the look, it will see that you already
+/// locked the file, and simply return as you already have it! It will only
+/// block if there is a different process holding the lock. Also, unlocking one
+/// file descriptor will unlock the file for the whole process.
+///
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
