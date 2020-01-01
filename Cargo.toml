@@ -9,10 +9,9 @@ readme = "README.md"
 keywords = ["file", "lock", "lockfile", "filelock", "lock-file"]
 categories = ["filesystem", "no-std", "concurrency"]
 license = "MIT"
-license-file = "LICENSE"
 
 [badges]
-maintenance = "passively-maintained"
+maintenance = { status = "passively-maintained" }
 
 [badges.travis-ci]
 repository = "https://github.com/brunoczim/fslock"
