@@ -243,9 +243,10 @@ where
         if prev_zero {
             Err(Error::from_raw_os_error(ERROR_INVALID_DATA as i32))?;
         }
-        len += 1;
         if ch == 0 {
             prev_zero = true;
+        } else {
+            len += 1;
         }
     }
 
