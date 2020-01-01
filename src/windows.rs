@@ -371,7 +371,9 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
         Err(Error::last_os_error())
     };
 
-    CloseHandle(overlapped.hEvent);
+    unsafe {
+        CloseHandle(overlapped.hEvent);
+    }
     ret
 }
 
@@ -405,7 +407,9 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
         }
     };
 
-    CloseHandle(overlapped.hEvent);
+    unsafe {
+        CloseHandle(overlapped.hEvent);
+    }
     ret
 }
 
@@ -433,7 +437,9 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         Err(Error::last_os_error())
     };
 
-    CloseHandle(overlapped.hEvent);
+    unsafe {
+        CloseHandle(overlapped.hEvent);
+    }
     ret
 }
 
