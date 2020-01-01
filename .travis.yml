@@ -12,20 +12,5 @@ script:
   - cargo test --verbose
   - cargo build --no-default-features --verbose
   - cargo test --no-default-features --verbose
-  - git branch gh-pages
-  - cargo doc --package fslock
-  - cp -r target/doc docs/
-  - git add docs
-  - git commit -m 'added docs'
 
 cache: cargo
-
-deploy:
-  provider: pages
-  skip_cleanup: true
-    github_token: $GCE_SECRET_KEY
-  keep_history: true
-  on:
-    branch: master
-  local_dir: docs
-  target_branch: gh-pages
