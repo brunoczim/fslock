@@ -275,6 +275,19 @@ impl<'str> Iterator for Chars<'str> {
     }
 }
 
+#[derive(Debug)]
+struct DropHandle {
+    handle: HANDLE,
+}
+
+impl Drop for DropHandle {
+    fn drop(&mut self) {
+        unsafe {
+            CloseHandle(self.handle);
+        }
+    }
+}
+
 /// Creates an event to be used by this implementation.
 fn make_event() -> Result<HANDLE, Error> {
     let mut security = make_security_attributes();
@@ -349,6 +362,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
+    let _drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
         LockFileEx(
             handle,
@@ -360,7 +374,7 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
         )
     };
 
-    let ret = if res == TRUE {
+    if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(())
@@ -369,17 +383,13 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
         }
     } else {
         Err(Error::last_os_error())
-    };
-
-    unsafe {
-        CloseHandle(overlapped.hEvent);
     }
-    ret
 }
 
 /// Tries to lock a file but returns as soon as possible if already locked.
 pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
     let mut overlapped = make_overlapped()?;
+    let _drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
         LockFileEx(
             handle,
@@ -391,7 +401,7 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
         )
     };
 
-    let ret = if res == TRUE {
+    if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(true)
@@ -405,17 +415,13 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
         } else {
             Err(Error::from_raw_os_error(err as i32))
         }
-    };
-
-    unsafe {
-        CloseHandle(overlapped.hEvent);
     }
-    ret
 }
 
 /// Unlocks the file.
 pub fn unlock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
+    let _drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
         UnlockFileEx(
             handle,
@@ -426,7 +432,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         )
     };
 
-    let ret = if res == TRUE {
+    if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(())
@@ -435,12 +441,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         }
     } else {
         Err(Error::last_os_error())
-    };
-
-    unsafe {
-        CloseHandle(overlapped.hEvent);
     }
-    ret
 }
 
 /// Closes the file.
