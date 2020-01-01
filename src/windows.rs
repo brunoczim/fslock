@@ -360,7 +360,7 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
         )
     };
 
-    if res == TRUE {
+    let ret = if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(())
@@ -369,7 +369,10 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
         }
     } else {
         Err(Error::last_os_error())
-    }
+    };
+
+    CloseHandle(overlapped.hEvent);
+    ret
 }
 
 /// Tries to lock a file but returns as soon as possible if already locked.
@@ -386,7 +389,7 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
         )
     };
 
-    if res == TRUE {
+    let ret = if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(true)
@@ -400,7 +403,10 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
         } else {
             Err(Error::from_raw_os_error(err as i32))
         }
-    }
+    };
+
+    CloseHandle(overlapped.hEvent);
+    ret
 }
 
 /// Unlocks the file.
@@ -416,7 +422,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         )
     };
 
-    if res == TRUE {
+    let ret = if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
             Ok(())
@@ -425,7 +431,10 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
         }
     } else {
         Err(Error::last_os_error())
-    }
+    };
+
+    CloseHandle(overlapped.hEvent);
+    ret
 }
 
 /// Closes the file.
