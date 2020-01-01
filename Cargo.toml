@@ -1,6 +1,6 @@
 [package]
 name = "fslock"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["brunoczim <brunoczim@gmail.com>"]
 edition = "2018"
 description = "A library to use files as locks"
@@ -17,8 +17,9 @@ maintenance = { status = "passively-maintained" }
 repository = "https://github.com/brunoczim/fslock"
 branch = "master"
 
-[target.'cfg(unix)'.dependencies]
-libc = "^0.2.66"
+[target.'cfg(unix)'.dependencies.libc]
+version = "^0.2.66"
+default-features = false
 
 [target.'cfg(windows)'.dependencies.winapi]
 version = "^0.3.8"
