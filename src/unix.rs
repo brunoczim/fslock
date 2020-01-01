@@ -1,6 +1,9 @@
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
 use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 
+#[cfg(feature = "std")]
+use std::{ffi, os::unix::ffi::OsStrExt};
+
 extern "C" {
     /// [Linux man page](https://linux.die.net/man/3/lockf)
     fn lockf(
@@ -209,6 +212,13 @@ impl<'str> IntoOsString for &'str OsStr {
 }
 
 impl ToOsStr for str {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        make_os_str(self.as_bytes())
+    }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for ffi::OsStr {
     fn to_os_str(&self) -> Result<EitherOsStr, Error> {
         make_os_str(self.as_bytes())
     }

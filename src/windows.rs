@@ -9,6 +9,9 @@ use winapi::um::{
     winnt::{LANG_USER_DEFAULT, LPWSTR},
 };
 
+#[cfg(feature = "std")]
+use std::{ffi, os::windows::ffi::OsStrExt};
+
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
 use core::{
     convert::TryFrom,
@@ -215,39 +218,52 @@ impl<'str> IntoOsString for &'str OsStr {
 
 impl ToOsStr for str {
     fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        let mut len = 0;
-        let mut prev_zero = false;
-        for ch in self.encode_utf16() {
-            if prev_zero {
-                Err(Error::from_raw_os_error(ERROR_INVALID_DATA as i32))?;
-            }
-            len += 1;
-            if ch == 0 {
-                prev_zero = true;
-            }
-        }
-
-        let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2 + 2) };
-        let alloc = match NonNull::new(alloc as *mut WCHAR) {
-            Some(alloc) => alloc,
-            None => {
-                return Err(Error::last_os_error());
-            },
-        };
-
-        let mut iter = self.encode_utf16();
-        for i in 0 .. len {
-            let ch = iter.next().expect("Inconsistent .encode_utf16()");
-            unsafe {
-                *alloc.as_ptr().add(i) = ch;
-            }
-        }
-        unsafe {
-            *alloc.as_ptr().add(len) = 0;
-        }
-        let string = OsString { alloc, len };
-        Ok(EitherOsStr::Owned(string))
+        let res = unsafe { make_os_string(|| self.encode_utf16()) };
+        res.map(EitherOsStr::Owned)
     }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for ffi::OsStr {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        let res = unsafe { make_os_string(|| self.encode_wide()) };
+        res.map(EitherOsStr::Owned)
+    }
+}
+
+/// Unsafe because the returned iterator must be exactly the same.
+unsafe fn make_os_string<F, I>(mut make_iter: F) -> Result<OsString, Error>
+where
+    F: FnMut() -> I,
+    I: Iterator<Item = u16>,
+{
+    let mut len = 0;
+    let mut prev_zero = false;
+    for ch in make_iter() {
+        if prev_zero {
+            Err(Error::from_raw_os_error(ERROR_INVALID_DATA as i32))?;
+        }
+        len += 1;
+        if ch == 0 {
+            prev_zero = true;
+        }
+    }
+
+    let alloc = LocalAlloc(LMEM_FIXED, len * 2 + 2);
+    let alloc = match NonNull::new(alloc as *mut WCHAR) {
+        Some(alloc) => alloc,
+        None => {
+            return Err(Error::last_os_error());
+        },
+    };
+
+    let mut iter = make_iter();
+    for i in 0 .. len {
+        let ch = iter.next().expect("Inconsistent .encode_utf16()");
+        *alloc.as_ptr().add(i) = ch;
+    }
+    *alloc.as_ptr().add(len) = 0;
+    Ok(OsString { alloc, len })
 }
 
 #[derive(Debug)]

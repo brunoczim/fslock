@@ -36,7 +36,22 @@ mod windows;
 use crate::windows as sys;
 
 pub use crate::sys::{Error, OsStr, OsString};
+
+#[cfg(feature = "std")]
+use std::{
+    ffi,
+    path::{Path, PathBuf},
+};
+
 use core::{fmt, ops::Deref};
+
+impl Clone for OsString {
+    fn clone(&self) -> Self {
+        self.to_os_str()
+            .and_then(|str| str.into_os_string())
+            .expect("Allocation error")
+    }
+}
 
 impl fmt::Debug for OsString {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
@@ -106,9 +121,51 @@ impl<'str> IntoOsString for EitherOsStr<'str> {
     }
 }
 
+#[cfg(feature = "std")]
+impl<'str> IntoOsString for &'str ffi::OsStr {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        self.to_os_str()?.into_os_string()
+    }
+}
+
+#[cfg(feature = "std")]
+impl IntoOsString for PathBuf {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        (*self).into_os_string()
+    }
+}
+
+#[cfg(feature = "std")]
+impl<'str> IntoOsString for &'str Path {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        AsRef::<ffi::OsStr>::as_ref(self).to_os_str()?.into_os_string()
+    }
+}
+
+#[cfg(feature = "std")]
+impl IntoOsString for ffi::OsString {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        (*self).into_os_string()
+    }
+}
+
 impl<'str> IntoOsString for &'str str {
     fn into_os_string(self) -> Result<OsString, Error> {
         self.to_os_str()?.into_os_string()
+    }
+}
+
+#[cfg(feature = "std")]
+impl IntoOsString for String {
+    fn into_os_string(self) -> Result<OsString, Error> {
+        self.to_os_str()?.into_os_string()
+    }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for String {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        (**self).to_os_str()
     }
 }
 
@@ -117,6 +174,17 @@ impl<'str> IntoOsString for &'str str {
 pub trait ToOsStr {
     /// Converts with possible allocation error.
     fn to_os_str(&self) -> Result<EitherOsStr, Error>;
+}
+
+impl<'str> ToOsStr for EitherOsStr<'str> {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        Ok(match self {
+            EitherOsStr::Owned(string) => {
+                EitherOsStr::Owned(string.to_os_str()?.into_os_string()?)
+            },
+            EitherOsStr::Borrowed(str) => EitherOsStr::Borrowed(str),
+        })
+    }
 }
 
 impl ToOsStr for OsStr {
@@ -128,6 +196,27 @@ impl ToOsStr for OsStr {
 impl ToOsStr for OsString {
     fn to_os_str(&self) -> Result<EitherOsStr, Error> {
         Ok(EitherOsStr::Borrowed(self.as_ref()))
+    }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for ffi::OsString {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        (**self).to_os_str()
+    }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for PathBuf {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        (**self).to_os_str()
+    }
+}
+
+#[cfg(feature = "std")]
+impl ToOsStr for Path {
+    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+        AsRef::<ffi::OsStr>::as_ref(self).to_os_str()
     }
 }
 
