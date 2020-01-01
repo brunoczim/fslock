@@ -8,6 +8,49 @@ extern "C" {
         cmd: libc::c_int,
         offset: libc::off_t,
     ) -> libc::c_int;
+
+}
+
+#[cfg(not(feature = "std"))]
+extern "C" {
+    /// Yeah, I had to copy this from std
+    #[cfg(not(target_os = "dragonfly"))]
+    #[cfg_attr(
+        any(
+            target_os = "linux",
+            target_os = "emscripten",
+            target_os = "fuchsia",
+            target_os = "l4re"
+        ),
+        link_name = "__errno_location"
+    )]
+    #[cfg_attr(
+        any(
+            target_os = "netbsd",
+            target_os = "openbsd",
+            target_os = "android",
+            target_os = "redox",
+            target_env = "newlib"
+        ),
+        link_name = "__errno"
+    )]
+    #[cfg_attr(target_os = "solaris", link_name = "___errno")]
+    #[cfg_attr(
+        any(target_os = "macos", target_os = "ios", target_os = "freebsd"),
+        link_name = "__error"
+    )]
+    #[cfg_attr(target_os = "haiku", link_name = "_errnop")]
+    fn errno_location() -> *mut libc::c_int;
+}
+
+#[cfg(not(feature = "std"))]
+fn errno() -> libc::c_int {
+    unsafe { *errno_location() }
+}
+
+#[cfg(feature = "std")]
+fn errno() -> libc::c_int {
+    Error::last_os_error().raw_os_error().unwrap_or(0) as libc::c_int
 }
 
 /// A type representing file descriptor on Unix.
@@ -33,7 +76,7 @@ impl Error {
 
     /// Creates an error from the last OS error code.
     pub fn last_os_error() -> Error {
-        Self::from_raw_os_error(unsafe { *libc::__errno_location() as i32 })
+        Self::from_raw_os_error(errno() as i32)
     }
 
     /// Raw OS error code. Returns option for compatibility with std.
@@ -213,7 +256,8 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
         libc::open(
             path.bytes.as_ptr(),
             libc::O_RDWR | libc::O_CLOEXEC | libc::O_CREAT,
-            libc::S_IRUSR | libc::S_IWUSR | libc::S_IRGRP | libc::S_IROTH,
+            (libc::S_IRUSR | libc::S_IWUSR | libc::S_IRGRP | libc::S_IROTH)
+                as libc::c_int,
         )
     };
 
@@ -240,7 +284,7 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
     if res == 0 {
         Ok(true)
     } else {
-        let err = unsafe { *libc::__errno_location() };
+        let err = errno();
         if err == libc::EACCES || err == libc::EAGAIN {
             Ok(false)
         } else {

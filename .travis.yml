@@ -10,5 +10,19 @@ os:
 script:
   - cargo build --verbose
   - cargo test --verbose
+  - cargo build --no-default-features --verbose
+  - cargo test --no-default-features --verbose
 
 cache: cargo
+
+deploy:
+  provider: pages
+  skip_cleanup: true
+    github_token: $GCE_SECRET_KEY
+  keep_history: true
+  on:
+    branch: master
+  local_dir: target/doc
+  target_branch: gh-pages
+  script:
+    cargo doc --package fslock
