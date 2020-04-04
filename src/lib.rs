@@ -473,3 +473,16 @@ impl Drop for LockFile {
         sys::close(self.desc);
     }
 }
+
+// Safe because:
+// 1. We never actually access the contents of the pointer that represents the
+// Windows Handle.
+//
+// 2. We require a mutable reference to actually mutate the file
+// system.
+
+#[cfg(windows)]
+unsafe impl Send for LockFile {}
+
+#[cfg(windows)]
+unsafe impl Sync for LockFile {}
