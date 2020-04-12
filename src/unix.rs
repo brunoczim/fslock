@@ -101,7 +101,7 @@ impl fmt::Display for Error {
 
 /// Owned allocation of an OS-native string.
 pub struct OsString {
-    alloc: NonNull<i8>,
+    alloc: NonNull<libc::c_char>,
     /// Length without the nul-byte.
     len: usize,
 }
@@ -127,12 +127,12 @@ impl AsRef<OsStr> for OsString {
 /// Borrowed allocation of an OS-native string.
 #[repr(transparent)]
 pub struct OsStr {
-    bytes: [i8],
+    bytes: [libc::c_char],
 }
 
 impl OsStr {
     /// Unsafe cause sequence needs to end with 0.
-    unsafe fn from_slice(slice: &[i8]) -> &Self {
+    unsafe fn from_slice(slice: &[libc::c_char]) -> &Self {
         transmute(slice)
     }
 }
@@ -193,7 +193,7 @@ impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = self.bytes.len();
         let alloc = unsafe { libc::malloc(len + 1) };
-        let alloc = match NonNull::new(alloc as *mut i8) {
+        let alloc = match NonNull::new(alloc as *mut libc::c_char) {
             Some(alloc) => alloc,
             None => {
                 return Err(Error::last_os_error());
@@ -239,7 +239,7 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
     }
 
     let alloc = unsafe { libc::malloc(slice.len() + 1) };
-    let alloc = match NonNull::new(alloc as *mut i8) {
+    let alloc = match NonNull::new(alloc as *mut libc::c_char) {
         Some(alloc) => alloc,
         None => {
             return Err(Error::last_os_error());
