@@ -1,6 +1,6 @@
 [package]
 name = "fslock"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["brunoczim <brunoczim@gmail.com>"]
 edition = "2018"
 description = "A library to use files as locks"
