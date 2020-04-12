@@ -100,8 +100,15 @@ impl fmt::Display for Error {
 }
 
 /// Owned allocation of an OS-native string.
+#[cfg(not(target_arch = "arm"))]
 pub struct OsString {
     alloc: NonNull<i8>,
+    /// Length without the nul-byte.
+    len: usize,
+}
+#[cfg(target_arch = "arm")]
+pub struct OsString {
+    alloc: NonNull<u8>,
     /// Length without the nul-byte.
     len: usize,
 }
@@ -126,8 +133,13 @@ impl AsRef<OsStr> for OsString {
 
 /// Borrowed allocation of an OS-native string.
 #[repr(transparent)]
+#[cfg(not(target_arch = "arm"))]
 pub struct OsStr {
     bytes: [i8],
+}
+#[cfg(target_arch = "arm")]
+pub struct OsStr {
+    bytes: [u8],
 }
 
 impl OsStr {
