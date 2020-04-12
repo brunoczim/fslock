@@ -143,8 +143,14 @@ pub struct OsStr {
 }
 
 impl OsStr {
+    #[cfg(not(target_arch = "arm"))]
     /// Unsafe cause sequence needs to end with 0.
     unsafe fn from_slice(slice: &[i8]) -> &Self {
+        transmute(slice)
+    }
+    #[cfg(target_arch = "arm")]
+    /// Unsafe cause sequence needs to end with 0.
+    unsafe fn from_slice(slice: &[u8]) -> &Self {
         transmute(slice)
     }
 }
