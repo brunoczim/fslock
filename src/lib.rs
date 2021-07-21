@@ -30,6 +30,15 @@ mod unix;
 #[cfg(unix)]
 use crate::unix as sys;
 
+#[cfg(all(unix, feature = "multilock"))]
+mod unix_fileid;
+#[cfg(all(unix, feature = "multilock"))]
+use unix_fileid as fileid;
+#[cfg(not(all(unix, feature = "multilock")))]
+mod nil_fileid;
+#[cfg(not(all(unix, feature = "multilock")))]
+use nil_fileid as fileid;
+
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
@@ -233,6 +242,10 @@ impl ToOsStr for Path {
 /// block if there is a different process holding the lock. Also, unlocking one
 /// file descriptor will unlock the file for the whole process.
 ///
+/// If you prefer the Windows behavior, you can enable the `multilock`
+/// feature (which requires `std`), to use an internal table to ensure that
+/// locks are exclusive within the same process.
+///
 /// # Example
 /// ```
 /// # fn main() -> Result<(), fslock::Error> {
@@ -251,6 +264,7 @@ impl ToOsStr for Path {
 /// ```
 pub struct LockFile {
     locked: bool,
+    id: fileid::FileId,
     desc: sys::FileDesc,
 }
 
@@ -290,7 +304,8 @@ impl LockFile {
     {
         let path = path.to_os_str()?;
         let desc = sys::open(path.as_ref())?;
-        Ok(Self { locked: false, desc })
+        let id = fileid::get_id(desc)?;
+        Ok(Self { locked: false, id, desc })
     }
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
@@ -336,6 +351,7 @@ impl LockFile {
             panic!("Cannot lock if already owning a lock");
         }
         sys::lock(self.desc)?;
+        fileid::take_lock(self.id);
         self.locked = true;
         Ok(())
     }
@@ -386,7 +402,11 @@ impl LockFile {
         }
         let locked = sys::try_lock(self.desc)?;
         if locked {
-            self.locked = true;
+            if fileid::try_take_lock(self.id) {
+                self.locked = true;
+            } else {
+                sys::unlock(self.desc)?;
+            }
         }
         Ok(locked)
     }
@@ -459,6 +479,7 @@ impl LockFile {
         if !self.locked {
             panic!("Attempted to unlock already locked lockfile");
         }
+        fileid::release_lock(self.id);
         sys::unlock(self.desc)?;
         self.locked = false;
         Ok(())
@@ -468,6 +489,7 @@ impl LockFile {
 impl Drop for LockFile {
     fn drop(&mut self) {
         if self.locked {
+            fileid::release_lock(self.id);
             let _ = sys::unlock(self.desc);
         }
         sys::close(self.desc);
