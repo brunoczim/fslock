@@ -2,23 +2,23 @@
 use crate::Error;
 use crate::sys::FileDesc;
 
-use std::{sync::{Arc, Mutex, Condvar}, collections::{HashMap, hash_map::Entry}};
+use std::{sync::{Arc, Mutex, Condvar}, collections::{HashMap, hash_map::Entry}, mem::MaybeUninit};
 use once_cell::sync::Lazy;
 
-pub type FileId = (u64, u64);
+pub type FileId = (libc::dev_t, libc::ino_t);
 
 static HELD_LOCKS: Lazy<Mutex<HashMap<FileId, Arc<Condvar>>>> = Lazy::new(|| {
     Mutex::new(HashMap::new())
 });
 
 pub fn get_id(fd: FileDesc) -> Result<FileId, Error> {
-    unsafe {
-        let mut stat: libc::stat = std::mem::zeroed();
-        if libc::fstat(fd, &mut stat) >= 0 {
-            Ok((stat.st_dev as u64, stat.st_ino as u64))
-        } else {
-            Err(Error::last_os_error())
-        }
+    let mut stat = MaybeUninit::<libc::stat>::zeroed();
+    let result_code = unsafe { libc::fstat(fd, stat.as_mut_ptr()) };
+    if result_code >= 0 {
+        let stat = unsafe { stat.assume_init() };
+        Ok((stat.st_dev, stat.st_ino))
+    } else {
+        Err(Error::last_os_error())
     }
 }
 
