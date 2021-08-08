@@ -624,3 +624,35 @@ unsafe impl Send for LockFile {}
 
 #[cfg(windows)]
 unsafe impl Sync for LockFile {}
+
+#[cfg(test)]
+mod test {
+
+    #[cfg(all(feature="std", any(not(unix), feature="multilock")))]
+    #[test]
+    fn exclusive_lock_cases() -> Result<(), crate::Error> {
+        let mut f1 = crate::LockFile::open_excl("lock2.test")?;
+        let mut f2 = crate::LockFile::open_excl("lock2.test")?;
+
+        // f1 will get the lock; f2 can't.
+        assert!(f1.try_lock()?);
+        assert!(! f2.try_lock()?);
+
+        // have f2 wait for f1.
+        let thr = std::thread::spawn(move || {
+            f2.lock().unwrap();
+            f2
+        });
+
+        // Sleep here a little, so that the other thread has time to
+        // block on the fd-lock.
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        drop(f1); // Causes f1 to unlock.
+
+        let f2 = thr.join().unwrap();
+
+        assert!(f2.owns_lock());
+
+        Ok(())
+    }
+}
