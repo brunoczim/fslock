@@ -1,17 +1,17 @@
 
-use crate::Error;
+use crate::{Error, Exclusive};
 use crate::sys::FileDesc;
 
 use std::{sync::{Arc, Mutex, Condvar}, collections::{HashMap, hash_map::Entry}, mem::MaybeUninit};
 use once_cell::sync::Lazy;
 
-pub type FileId = (libc::dev_t, libc::ino_t);
+type RawFileId = (libc::dev_t, libc::ino_t);
 
-static HELD_LOCKS: Lazy<Mutex<HashMap<FileId, Arc<Condvar>>>> = Lazy::new(|| {
+static HELD_LOCKS: Lazy<Mutex<HashMap<RawFileId, Arc<Condvar>>>> = Lazy::new(|| {
     Mutex::new(HashMap::new())
 });
 
-pub fn get_id(fd: FileDesc) -> Result<FileId, Error> {
+fn get_raw_id(fd: FileDesc) -> Result<RawFileId, Error> {
     let mut stat = MaybeUninit::<libc::stat>::zeroed();
     let result_code = unsafe { libc::fstat(fd, stat.as_mut_ptr()) };
     if result_code >= 0 {
@@ -22,7 +22,7 @@ pub fn get_id(fd: FileDesc) -> Result<FileId, Error> {
     }
 }
 
-pub fn take_lock(id: FileId) {
+fn take_lock(id: RawFileId) {
     let mut cvar: Option<Arc<Condvar>> = None;
     let mut held = HELD_LOCKS.lock().unwrap();
     loop {
@@ -40,7 +40,7 @@ pub fn take_lock(id: FileId) {
     }
 }
 
-pub fn try_take_lock(id: FileId) -> bool{
+fn try_take_lock(id: RawFileId) -> bool{
     let mut held = HELD_LOCKS.lock().unwrap();
     if let Entry::Vacant(e) = held.entry(id) {
         e.insert(Arc::new(Condvar::new()));
@@ -50,10 +50,42 @@ pub fn try_take_lock(id: FileId) -> bool{
     }
 }
 
-pub fn release_lock(id: FileId) {
+fn release_lock(id: RawFileId) {
     let mut held = HELD_LOCKS.lock().unwrap();
     if let Some(cvar) = held.remove(&id) {
         cvar.notify_one();
     }
 }
 
+#[derive(Debug,Copy,Clone)]
+pub enum FileId {
+    Id(RawFileId),
+    NonExclusive,
+}
+
+impl FileId {
+    pub(crate) fn get_id(fd: FileDesc, ex: Exclusive) -> Result<Self, Error> {
+        match ex {
+            Exclusive::ExclusiveInProcess => Ok(FileId::Id(get_raw_id(fd)?)),
+            Exclusive::OsDependent => Ok(FileId::NonExclusive),
+        }
+    }
+    pub fn take_lock(&self) {
+        match self {
+            FileId::NonExclusive => {},
+            FileId::Id(raw) => take_lock(*raw),
+        }
+    }
+    pub fn try_take_lock(&self) -> bool {
+        match self {
+            FileId::NonExclusive => true,
+            FileId::Id(raw) => try_take_lock(*raw),
+        }
+    }
+    pub fn release_lock(&self) {
+        match self {
+            FileId::NonExclusive => {},
+            FileId::Id(raw) => release_lock(*raw),
+        }
+    }
+}
