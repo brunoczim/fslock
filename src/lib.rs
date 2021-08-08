@@ -350,8 +350,12 @@ impl LockFile {
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
-        sys::lock(self.desc)?;
         fileid::take_lock(self.id);
+        // We got the fileid lock; now try to lock the file.
+        if let Err(error) = sys::lock(self.desc) {
+            fileid::release_lock(self.id);
+            return Err(error);
+        }
         self.locked = true;
         Ok(())
     }
@@ -400,15 +404,17 @@ impl LockFile {
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
-        let locked = sys::try_lock(self.desc)?;
-        if locked {
-            if fileid::try_take_lock(self.id) {
-                self.locked = true;
-            } else {
-                sys::unlock(self.desc)?;
+        if fileid::try_take_lock(self.id) {
+            // We got the fileid lock; now try to lock the file.
+            let lock_result = sys::try_lock(self.desc);
+            match lock_result {
+                Ok(true) => self.locked = true,
+                _ => fileid::release_lock(self.id),
             }
+            lock_result
+        } else {
+            Ok(false)
         }
-        Ok(locked)
     }
 
     /// Returns whether this file handle owns the lock.
@@ -479,9 +485,9 @@ impl LockFile {
         if !self.locked {
             panic!("Attempted to unlock already locked lockfile");
         }
-        fileid::release_lock(self.id);
-        sys::unlock(self.desc)?;
         self.locked = false;
+        sys::unlock(self.desc)?;
+        fileid::release_lock(self.id);
         Ok(())
     }
 }
@@ -489,8 +495,9 @@ impl LockFile {
 impl Drop for LockFile {
     fn drop(&mut self) {
         if self.locked {
-            fileid::release_lock(self.id);
             let _ = sys::unlock(self.desc);
+            fileid::release_lock(self.id);
+            self.locked = false;
         }
         sys::close(self.desc);
     }
