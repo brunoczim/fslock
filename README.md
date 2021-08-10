@@ -26,4 +26,4 @@ fn main() -> Result<(), fslock::Error> {
 
 # Docs on Master
 
-https://brunoczim.github.com/fslock/fslock
+https://brunoczim.github.io/fslock/fslock
