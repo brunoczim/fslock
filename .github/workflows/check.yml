@@ -21,6 +21,12 @@ jobs:
         with:
           command: check
 
+      - name: Run cargo check with multilock
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --features multilock
+
   test:
     name: Test Suite
     runs-on: ubuntu-latest
@@ -39,3 +45,9 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+
+      - name: Run cargo test with multilock
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features multilock
