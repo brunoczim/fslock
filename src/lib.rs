@@ -279,8 +279,13 @@ pub struct LockFile {
 }
 
 impl LockFile {
-    /// Opens a file for locking. On Unix, if the path is nul-terminated (ends
-    /// with 0), no extra allocation will be made.
+    /// Opens a file for locking. Exclusive here means the lock is exclusive to
+    /// a file descriptor/handle on all platforms, instead of Unix's behaviour
+    /// of locking for the whole process. Do not confuse "exclusive" with the
+    /// terminology of Linux's and BSD's flock system call.
+    ///
+    /// On Unix, if the path is nul-terminated (ends with 0), no extra
+    /// allocation will be made.
     ///
     /// # Panics
     /// Panics if the path contains a nul-byte in a place other than the end.
