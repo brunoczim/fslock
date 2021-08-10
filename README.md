@@ -6,7 +6,9 @@ API to use files as a lock. Supports non-std crates by disabling feature
 # Types
 Currently, only one type is provided: [`LockFile`]. It does not destroy the
 file after closed and behaviour on locking different file handles owned by
-the same process is different between Unix and Windows. # Example:
+the same process is different between Unix and Windows, unless you activate the
+`multilock` feature, which enables the `open_excl` method that locks files per
+file descriptor/handle on all platforms.
 
 # Example
 ```rust
@@ -21,3 +23,7 @@ fn main() -> Result<(), fslock::Error> {
     Ok(())
 }
 ```
+
+# Docs on Master
+
+https://brunoczim.github.com/fslock/fslock
