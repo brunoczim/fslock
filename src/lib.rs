@@ -43,14 +43,14 @@ use nil_fileid as fileid;
 /// file, by the same process, are exclusive.
 #[derive(Debug,Copy,Clone)]
 #[non_exhaustive]
-enum Exclusive {
+enum Exclusivity {
     /// Treat any two file descriptors to the same file as having
     /// separate locks.
     ///
     /// This option requires allocation internally, and is not
     /// available on Unix when building without the `std` feature.
     #[cfg(any(not(unix), feature="multilock"))]
-    ExclusiveInProcess,
+    PerFileDesc,
     /// Os-dependent behavior.
     OsDependent,
 }
@@ -334,7 +334,7 @@ impl LockFile {
     where
         P: ToOsStr + ?Sized,
     {
-        Self::open_internal(path, Exclusive::ExclusiveInProcess)
+        Self::open_internal(path, Exclusivity::PerFileDesc)
     }
 
     /// Opens a file for locking, with OS-dependent locking behavior. On Unix,
@@ -402,11 +402,11 @@ impl LockFile {
     where
         P: ToOsStr + ?Sized,
     {
-        Self::open_internal(path, Exclusive::OsDependent)
+        Self::open_internal(path, Exclusivity::OsDependent)
     }
 
     /// Implementation helper for open_excl and open.
-    fn open_internal<P>(path: &P, ex: Exclusive) -> Result<Self, Error>
+    fn open_internal<P>(path: &P, ex: Exclusivity) -> Result<Self, Error>
     where
         P: ToOsStr + ?Sized,
     {

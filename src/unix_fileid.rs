@@ -1,5 +1,5 @@
 
-use crate::{Error, Exclusive};
+use crate::{Error, Exclusivity};
 use crate::sys::FileDesc;
 
 use std::{sync::{Arc, Mutex, Condvar}, collections::{HashMap, hash_map::Entry}, mem::MaybeUninit};
@@ -59,33 +59,33 @@ fn release_lock(id: RawFileId) {
 
 #[derive(Debug,Copy,Clone)]
 pub enum FileId {
-    Id(RawFileId),
+    Exclusive(RawFileId),
     NonExclusive,
 }
 
 impl FileId {
-    pub(crate) fn get_id(fd: FileDesc, ex: Exclusive) -> Result<Self, Error> {
+    pub(crate) fn get_id(fd: FileDesc, ex: Exclusivity) -> Result<Self, Error> {
         match ex {
-            Exclusive::ExclusiveInProcess => Ok(FileId::Id(get_raw_id(fd)?)),
-            Exclusive::OsDependent => Ok(FileId::NonExclusive),
+            Exclusivity::PerFileDesc => Ok(FileId::Exclusive(get_raw_id(fd)?)),
+            Exclusivity::OsDependent => Ok(FileId::NonExclusive),
         }
     }
     pub fn take_lock(&self) {
         match self {
             FileId::NonExclusive => {},
-            FileId::Id(raw) => take_lock(*raw),
+            FileId::Exclusive(raw) => take_lock(*raw),
         }
     }
     pub fn try_take_lock(&self) -> bool {
         match self {
             FileId::NonExclusive => true,
-            FileId::Id(raw) => try_take_lock(*raw),
+            FileId::Exclusive(raw) => try_take_lock(*raw),
         }
     }
     pub fn release_lock(&self) {
         match self {
             FileId::NonExclusive => {},
-            FileId::Id(raw) => release_lock(*raw),
+            FileId::Exclusive(raw) => release_lock(*raw),
         }
     }
 }

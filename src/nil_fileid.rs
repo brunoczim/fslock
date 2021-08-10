@@ -1,13 +1,13 @@
 
 use crate::Error;
 use crate::sys::FileDesc;
-use  crate::Exclusive;
+use  crate::Exclusivity;
 
 #[derive(Debug,Copy,Clone)]
 pub struct FileId;
 
 impl FileId {
-    pub(crate) fn get_id(_: FileDesc, _ : Exclusive) -> Result<Self, Error> {
+    pub(crate) fn get_id(_: FileDesc, _ : Exclusivity) -> Result<Self, Error> {
         Ok(FileId)
     }
     pub fn take_lock(&self) {}
