@@ -41,7 +41,7 @@ use nil_fileid as fileid;
 
 /// Enumeration used to declare whether FsLock instances opened with the same
 /// file, by the same process, are exclusive.
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 #[non_exhaustive]
 enum Exclusivity {
     /// Treat any two file descriptors to the same file as having
@@ -49,7 +49,7 @@ enum Exclusivity {
     ///
     /// This option requires allocation internally, and is not
     /// available on Unix when building without the `std` feature.
-    #[cfg(any(not(unix), feature="multilock"))]
+    #[cfg(any(not(unix), feature = "multilock"))]
     PerFileDesc,
     /// Os-dependent behavior.
     OsDependent,
@@ -329,7 +329,7 @@ impl LockFile {
     ///
     /// This function is only available on Unix when the `multilock`
     /// feature is enabled.
-    #[cfg(any(not(unix), feature="multilock"))]
+    #[cfg(any(not(unix), feature = "multilock"))]
     pub fn open_excl<P>(path: &P) -> Result<Self, Error>
     where
         P: ToOsStr + ?Sized,
@@ -415,7 +415,6 @@ impl LockFile {
         let id = fileid::FileId::get_id(desc, ex)?;
         Ok(Self { locked: false, id, desc })
     }
-
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
     /// else already owns a lock. After locked, if no attempt to unlock is made,
@@ -628,7 +627,7 @@ unsafe impl Sync for LockFile {}
 #[cfg(test)]
 mod test {
 
-    #[cfg(all(feature="std", any(not(unix), feature="multilock")))]
+    #[cfg(all(feature = "std", any(not(unix), feature = "multilock")))]
     #[test]
     fn exclusive_lock_cases() -> Result<(), crate::Error> {
         let mut f1 = crate::LockFile::open_excl("lock2.test")?;
@@ -636,7 +635,7 @@ mod test {
 
         // f1 will get the lock; f2 can't.
         assert!(f1.try_lock()?);
-        assert!(! f2.try_lock()?);
+        assert!(!f2.try_lock()?);
 
         // have f2 wait for f1.
         let thr = std::thread::spawn(move || {

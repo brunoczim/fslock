@@ -1,15 +1,16 @@
+use crate::{sys::FileDesc, Error, Exclusivity};
 
-use crate::{Error, Exclusivity};
-use crate::sys::FileDesc;
-
-use std::{sync::{Arc, Mutex, Condvar}, collections::{HashMap, hash_map::Entry}, mem::MaybeUninit};
 use once_cell::sync::Lazy;
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    mem::MaybeUninit,
+    sync::{Arc, Condvar, Mutex},
+};
 
 type RawFileId = (libc::dev_t, libc::ino_t);
 
-static HELD_LOCKS: Lazy<Mutex<HashMap<RawFileId, Arc<Condvar>>>> = Lazy::new(|| {
-    Mutex::new(HashMap::new())
-});
+static HELD_LOCKS: Lazy<Mutex<HashMap<RawFileId, Arc<Condvar>>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 fn get_raw_id(fd: FileDesc) -> Result<RawFileId, Error> {
     let mut stat = MaybeUninit::<libc::stat>::zeroed();
@@ -30,17 +31,17 @@ fn take_lock(id: RawFileId) {
             Entry::Vacant(e) => {
                 e.insert(cvar.unwrap_or_else(|| Arc::new(Condvar::new())));
                 return;
-            }
+            },
             Entry::Occupied(ref e) => {
                 let cv = Arc::clone(e.get());
                 held = cv.wait(held).unwrap(); // releases lock on held while waiting.
                 cvar = Some(cv);
-            }
+            },
         }
     }
 }
 
-fn try_take_lock(id: RawFileId) -> bool{
+fn try_take_lock(id: RawFileId) -> bool {
     let mut held = HELD_LOCKS.lock().unwrap();
     if let Entry::Vacant(e) = held.entry(id) {
         e.insert(Arc::new(Condvar::new()));
@@ -57,7 +58,7 @@ fn release_lock(id: RawFileId) {
     }
 }
 
-#[derive(Debug,Copy,Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum FileId {
     Exclusive(RawFileId),
     NonExclusive,
