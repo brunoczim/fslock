@@ -2,7 +2,7 @@ name: fslock CI - GH Pages
 on: 
   push:
     branches:
-      - main
+      - master
 
 jobs:
   docs:
