@@ -7,7 +7,10 @@ use std::{
     sync::{Arc, Condvar, Mutex},
 };
 
+#[cfg(not(target_os="android"))]
 type RawFileId = (libc::dev_t, libc::ino_t);
+#[cfg(target_os="android")]
+type RawFileId = (libc::c_ulonglong, libc::c_ulonglong);
 
 static HELD_LOCKS: Lazy<Mutex<HashMap<RawFileId, Arc<Condvar>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
