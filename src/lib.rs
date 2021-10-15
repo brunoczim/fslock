@@ -39,6 +39,9 @@ mod nil_fileid;
 #[cfg(not(all(unix, feature = "multilock")))]
 use nil_fileid as fileid;
 
+mod string;
+mod fmt;
+
 /// Enumeration used to declare whether FsLock instances opened with the same
 /// file, by the same process, are exclusive.
 #[derive(Debug, Copy, Clone)]
@@ -60,190 +63,10 @@ mod windows;
 #[cfg(windows)]
 use crate::windows as sys;
 
-pub use crate::sys::{Error, OsStr, OsString};
-
-#[cfg(feature = "std")]
-use std::{
-    ffi,
-    path::{Path, PathBuf},
+pub use crate::{
+    string::{EitherOsStr, IntoOsString, ToOsStr},
+    sys::{Error, OsStr, OsString},
 };
-
-use core::{fmt, ops::Deref};
-
-impl Clone for OsString {
-    fn clone(&self) -> Self {
-        self.to_os_str()
-            .and_then(|str| str.into_os_string())
-            .expect("Allocation error")
-    }
-}
-
-impl fmt::Debug for OsString {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{:?}", self.as_ref())
-    }
-}
-
-impl fmt::Display for OsString {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.as_ref())
-    }
-}
-
-impl Deref for OsString {
-    type Target = OsStr;
-
-    fn deref(&self) -> &OsStr {
-        self.as_ref()
-    }
-}
-
-/// Either borrowed or owned allocation of an OS-native string.
-#[derive(Debug)]
-pub enum EitherOsStr<'str> {
-    /// Borrowed allocation.
-    Borrowed(&'str OsStr),
-    /// Owned allocation.
-    Owned(OsString),
-}
-
-impl<'str> AsRef<OsStr> for EitherOsStr<'str> {
-    fn as_ref(&self) -> &OsStr {
-        match self {
-            Self::Borrowed(str) => str,
-            Self::Owned(string) => string.as_ref(),
-        }
-    }
-}
-
-impl<'str> Deref for EitherOsStr<'str> {
-    type Target = OsStr;
-
-    fn deref(&self) -> &OsStr {
-        self.as_ref()
-    }
-}
-
-/// Conversion of anything into an owned OS-native string. If allocation fails,
-/// an error shall be returned.
-pub trait IntoOsString {
-    /// Converts with possible allocation error.
-    fn into_os_string(self) -> Result<OsString, Error>;
-}
-
-impl IntoOsString for OsString {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        Ok(self)
-    }
-}
-
-impl<'str> IntoOsString for EitherOsStr<'str> {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        match self {
-            Self::Borrowed(str) => str.into_os_string(),
-            Self::Owned(string) => Ok(string),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl<'str> IntoOsString for &'str ffi::OsStr {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        self.to_os_str()?.into_os_string()
-    }
-}
-
-#[cfg(feature = "std")]
-impl IntoOsString for PathBuf {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        (*self).into_os_string()
-    }
-}
-
-#[cfg(feature = "std")]
-impl<'str> IntoOsString for &'str Path {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        AsRef::<ffi::OsStr>::as_ref(self).to_os_str()?.into_os_string()
-    }
-}
-
-#[cfg(feature = "std")]
-impl IntoOsString for ffi::OsString {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        (*self).into_os_string()
-    }
-}
-
-impl<'str> IntoOsString for &'str str {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        self.to_os_str()?.into_os_string()
-    }
-}
-
-#[cfg(feature = "std")]
-impl IntoOsString for String {
-    fn into_os_string(self) -> Result<OsString, Error> {
-        self.to_os_str()?.into_os_string()
-    }
-}
-
-#[cfg(feature = "std")]
-impl ToOsStr for String {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        (**self).to_os_str()
-    }
-}
-
-/// Conversion of anything to an either borrowed or owned OS-native string. If
-/// allocation fails, an error shall be returned.
-pub trait ToOsStr {
-    /// Converts with possible allocation error.
-    fn to_os_str(&self) -> Result<EitherOsStr, Error>;
-}
-
-impl<'str> ToOsStr for EitherOsStr<'str> {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        Ok(match self {
-            EitherOsStr::Owned(string) => {
-                EitherOsStr::Owned(string.to_os_str()?.into_os_string()?)
-            },
-            EitherOsStr::Borrowed(str) => EitherOsStr::Borrowed(str),
-        })
-    }
-}
-
-impl ToOsStr for OsStr {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        Ok(EitherOsStr::Borrowed(self))
-    }
-}
-
-impl ToOsStr for OsString {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        Ok(EitherOsStr::Borrowed(self.as_ref()))
-    }
-}
-
-#[cfg(feature = "std")]
-impl ToOsStr for ffi::OsString {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        (**self).to_os_str()
-    }
-}
-
-#[cfg(feature = "std")]
-impl ToOsStr for PathBuf {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        (**self).to_os_str()
-    }
-}
-
-#[cfg(feature = "std")]
-impl ToOsStr for Path {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
-        AsRef::<ffi::OsStr>::as_ref(self).to_os_str()
-    }
-}
 
 #[derive(Debug)]
 /// A handle to a file that is lockable. Does not delete the file.
@@ -422,8 +245,8 @@ impl LockFile {
     }
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
-    /// else already owns a lock. After locked, if no attempt to unlock is made,
-    /// it will be automatically unlocked on the file handle drop.
+    /// else already owns a lock). After locked, if no attempt to unlock is
+    /// made, it will be automatically unlocked on the file handle drop.
     ///
     /// # Panics
     /// Panics if this handle already owns the file.
@@ -471,6 +294,22 @@ impl LockFile {
         }
         self.locked = true;
         Ok(())
+    }
+
+    /// Locks this file and writes this process's PID into the file, which will
+    /// be erased on unlock. Like [`LockFile::lock`], blocks while it is not
+    /// possible to lock. After locked, if no attempt to unlock is made, it will
+    /// be automatically unlocked on the file handle drop.
+    pub fn lock_with_pid(&mut self) -> Result<(), Error> {
+        if let Err(error) = self.lock() {
+            return Err(error);
+        }
+
+        let result = write!(fmt::Writer(self.desc), "{}", sys::pid());
+        if result.is_err() {
+            let _ = self.unlock();
+        }
+        result
     }
 
     /// Locks this file. Does NOT block if it is not possible to lock (i.e.
@@ -600,6 +439,7 @@ impl LockFile {
         }
         self.locked = false;
         sys::unlock(self.desc)?;
+        sys::truncate(self.desc)?;
         self.id.release_lock();
         Ok(())
     }

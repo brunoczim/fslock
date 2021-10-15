@@ -1,5 +1,11 @@
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
-use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
+use core::{
+    fmt::{self, Write},
+    mem::transmute,
+    ptr::NonNull,
+    slice,
+    str,
+};
 
 #[cfg(feature = "std")]
 use std::{ffi, os::unix::ffi::OsStrExt};
@@ -58,6 +64,8 @@ fn errno() -> libc::c_int {
 
 /// A type representing file descriptor on Unix.
 pub type FileDesc = libc::c_int;
+
+pub type Pid = libc::pid_t;
 
 #[cfg(feature = "std")]
 /// An IO error.
@@ -257,6 +265,10 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
     Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
 }
 
+pub fn pid() -> Pid {
+    unsafe { libc::getpid() }
+}
+
 /// Opens a file with only purpose of locking it. Creates it if it does not
 /// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the
 /// end (and only in the end) is allowed, which in this case no extra allocation
@@ -275,6 +287,29 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
         Ok(fd)
     } else {
         Err(Error::last_os_error())
+    }
+}
+
+pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
+    while bytes.len() > 0 {
+        let written = unsafe {
+            libc::write(fd, bytes.as_ptr() as *const libc::c_void, bytes.len())
+        };
+        if written < 0 && errno() != libc::EAGAIN {
+            return Err(Error::last_os_error());
+        }
+        bytes = &bytes[written as usize ..];
+    }
+
+    Ok(())
+}
+
+pub fn truncate(fd: FileDesc) -> Result<(), Error> {
+    let res = unsafe { libc::ftruncate(fd, 0) };
+    if res < 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
     }
 }
 
