@@ -1,11 +1,5 @@
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
-use core::{
-    fmt::{self, Write},
-    mem::transmute,
-    ptr::NonNull,
-    slice,
-    str,
-};
+use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 
 #[cfg(feature = "std")]
 use std::{ffi, os::unix::ffi::OsStrExt};
