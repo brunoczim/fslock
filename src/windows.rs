@@ -22,12 +22,21 @@ use core::{
 };
 use winapi::{
     shared::{
-        minwindef::{DWORD, FALSE, LPVOID, TRUE},
+        minwindef::{DWORD, FALSE, LPCVOID, LPVOID, TRUE},
         winerror::{ERROR_INVALID_DATA, ERROR_LOCK_VIOLATION},
     },
     um::{
         errhandlingapi::GetLastError,
-        fileapi::{CreateFileW, LockFileEx, UnlockFileEx, CREATE_ALWAYS},
+        fileapi::{
+            CreateFileW,
+            LockFileEx,
+            SetEndOfFile,
+            SetFilePointer,
+            UnlockFileEx,
+            WriteFile,
+            CREATE_ALWAYS,
+            INVALID_SET_FILE_POINTER,
+        },
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
             OVERLAPPED_u,
@@ -39,8 +48,9 @@ use winapi::{
             OVERLAPPED,
             SECURITY_ATTRIBUTES,
         },
+        processthreadsapi::GetCurrentProcessId,
         synchapi::{CreateEventW, WaitForSingleObject},
-        winbase::{LocalAlloc, LocalFree, WAIT_FAILED},
+        winbase::{LocalAlloc, LocalFree, FILE_BEGIN, WAIT_FAILED},
         winnt::{
             RtlCopyMemory,
             FILE_SHARE_DELETE,
@@ -55,6 +65,8 @@ use winapi::{
 
 /// A type representing file descriptor on Unix.
 pub type FileDesc = HANDLE;
+
+pub type Pid = DWORD;
 
 #[cfg(feature = "std")]
 /// An IO error.
@@ -351,6 +363,10 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
     })
 }
 
+pub fn pid() -> Pid {
+    unsafe { GetCurrentProcessId() }
+}
+
 /// Opens a file with only purpose of locking it. Creates it if it does not
 /// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the
 /// end (and only in the end) is allowed, which in this case no extra allocation
@@ -373,6 +389,37 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
         Ok(handle)
     } else {
         Err(Error::last_os_error())
+    }
+}
+
+pub fn write(handle: FileDesc, bytes: &[u8]) -> Result<(), Error> {
+    let result = unsafe {
+        WriteFile(
+            handle,
+            bytes.as_ptr() as LPCVOID,
+            bytes.len() as DWORD,
+            ptr::null_mut(),
+            ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+pub fn truncate(handle: FileDesc) -> Result<(), Error> {
+    let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
+    if res == INVALID_SET_FILE_POINTER {
+        return Err(Error::last_os_error());
+    }
+
+    let res = unsafe { SetEndOfFile(handle) };
+    if res == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
     }
 }
 

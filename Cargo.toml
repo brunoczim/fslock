@@ -36,7 +36,8 @@ features = [
     "winnt",
     "synchapi",
     "handleapi",
-    "fileapi"
+    "fileapi",
+    "processthreadsapi"
 ]
 
 [features]
