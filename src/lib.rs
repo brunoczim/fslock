@@ -300,12 +300,41 @@ impl LockFile {
     /// be erased on unlock. Like [`LockFile::lock`], blocks while it is not
     /// possible to lock. After locked, if no attempt to unlock is made, it will
     /// be automatically unlocked on the file handle drop.
+    ///
+    /// # Panics
+    /// Panics if this handle already owns the file.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() -> Result<(), fslock::Error> {
+    /// use fslock::LockFile;
+    /// use std::fs::read_to_string;
+    ///
+    /// let mut file = LockFile::open("mylock.test")?;
+    /// file.lock_with_pid()?;
+    /// do_stuff();
+    /// file.unlock()?;
+    ///
+    /// fn do_stuff() -> Result<(), fslock::Error> {
+    ///     let content = read_to_string("mylock.test")?;
+    ///     assert!(content.trim().len() > 0);
+    ///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));
+    ///     Ok(())
+    /// }
+    ///
+    /// # Ok(())
+    /// # }
+    /// # fn do_stuff() {
+    /// #    // doing stuff here.
+    /// # }
+    /// ```
     pub fn lock_with_pid(&mut self) -> Result<(), Error> {
         if let Err(error) = self.lock() {
             return Err(error);
         }
 
-        let result = write!(fmt::Writer(self.desc), "{}", sys::pid());
+        let result = writeln!(fmt::Writer(self.desc), "{}", sys::pid());
         if result.is_err() {
             let _ = self.unlock();
         }

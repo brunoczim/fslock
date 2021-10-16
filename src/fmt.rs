@@ -59,6 +59,7 @@ impl Write for Adapter {
             } else {
                 let end = self.cursor + data.len();
                 self.buffer[self.cursor .. end].copy_from_slice(bytes);
+                self.cursor = end;
                 bytes = &bytes[bytes.len() ..];
             }
         }
