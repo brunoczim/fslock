@@ -1,3 +1,5 @@
+//! This module implements common functionalities for OS's strings.
+
 use crate::sys::{Error, OsStr, OsString};
 use core::{fmt, ops::Deref};
 

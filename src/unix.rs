@@ -59,6 +59,7 @@ fn errno() -> libc::c_int {
 /// A type representing file descriptor on Unix.
 pub type FileDesc = libc::c_int;
 
+/// A type representing Process ID on Unix.
 pub type Pid = libc::pid_t;
 
 #[cfg(feature = "std")]
@@ -259,6 +260,7 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
     Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
 }
 
+/// Returns the ID of the current process.
 pub fn pid() -> Pid {
     unsafe { libc::getpid() }
 }
@@ -284,6 +286,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     }
 }
 
+/// Writes data into the given open file.
 pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
     while bytes.len() > 0 {
         let written = unsafe {
@@ -298,6 +301,7 @@ pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
+/// Truncates the file referenced by the given file descriptor.
 pub fn truncate(fd: FileDesc) -> Result<(), Error> {
     let res = unsafe { libc::ftruncate(fd, 0) };
     if res < 0 {

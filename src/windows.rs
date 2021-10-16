@@ -66,6 +66,7 @@ use winapi::{
 /// A type representing file descriptor on Unix.
 pub type FileDesc = HANDLE;
 
+/// A type representing Process ID on Windows.
 pub type Pid = DWORD;
 
 #[cfg(feature = "std")]
@@ -304,8 +305,10 @@ impl<'str> Iterator for Chars<'str> {
     }
 }
 
+/// Helper to auto-drop a HANDLE.
 #[derive(Debug)]
 struct DropHandle {
+    /// HANDLE being dropped.
     handle: HANDLE,
 }
 
@@ -363,6 +366,7 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
     })
 }
 
+/// Returns the ID of the current process.
 pub fn pid() -> Pid {
     unsafe { GetCurrentProcessId() }
 }
@@ -392,6 +396,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     }
 }
 
+/// Writes data into the given open file.
 pub fn write(handle: FileDesc, bytes: &[u8]) -> Result<(), Error> {
     let result = unsafe {
         WriteFile(
@@ -409,6 +414,7 @@ pub fn write(handle: FileDesc, bytes: &[u8]) -> Result<(), Error> {
     }
 }
 
+/// Truncates the file referenced by the given HANDLE.
 pub fn truncate(handle: FileDesc) -> Result<(), Error> {
     let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
     if res == INVALID_SET_FILE_POINTER {
