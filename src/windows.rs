@@ -29,6 +29,7 @@ use winapi::{
         errhandlingapi::GetLastError,
         fileapi::{
             CreateFileW,
+            FlushFileBuffers,
             LockFileEx,
             SetEndOfFile,
             SetFilePointer,
