@@ -103,7 +103,7 @@ jobs:
 
   test-windows:
     name: Test Suite on Windows
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     env:
       RUST_BACKTRACE: full
     steps:
