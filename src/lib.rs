@@ -313,20 +313,17 @@ impl LockFile {
     ///
     /// let mut file = LockFile::open("mylock.test")?;
     /// file.lock_with_pid()?;
-    /// do_stuff();
+    /// do_stuff()?;
     /// file.unlock()?;
     ///
     /// fn do_stuff() -> Result<(), fslock::Error> {
-    ///     let content = read_to_string("mylock.test")?;
+    ///     let mut content = read_to_string("mylock.test")?;
     ///     assert!(content.trim().len() > 0);
     ///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));
     ///     Ok(())
     /// }
     ///
     /// # Ok(())
-    /// # }
-    /// # fn do_stuff() {
-    /// #    // doing stuff here.
     /// # }
     /// ```
     pub fn lock_with_pid(&mut self) -> Result<(), Error> {
@@ -500,12 +497,60 @@ unsafe impl Sync for LockFile {}
 
 #[cfg(test)]
 mod test {
+    use crate::{Error, LockFile};
+
+    #[cfg(feature = "std")]
+    fn check_try_lock_example(expected: &[u8]) -> Result<(), Error> {
+        use std::process::{Command, Stdio};
+
+        let child = Command::new("cargo")
+            .arg("run")
+            .arg("-q")
+            .arg("--example")
+            .arg("try_lock")
+            .stdout(Stdio::piped())
+            .spawn()?;
+        let output = child.wait_with_output()?;
+
+        assert!(output.status.success());
+        assert_eq!(output.stderr, b"");
+        assert_eq!(output.stdout, expected);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn other_process() -> Result<(), Error> {
+        let mut file = LockFile::open("trylock.test")?;
+        file.lock()?;
+        check_try_lock_example(b"FAILURE\n")?;
+        file.unlock()?;
+        check_try_lock_example(b"SUCCESS\n")?;
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    #[test]
+    fn other_process_but_curr_reads() -> Result<(), Error> {
+        use std::fs::read_to_string;
+
+        let mut file = LockFile::open("trylock.test")?;
+        file.lock()?;
+        check_try_lock_example(b"FAILURE\n")?;
+
+        let mut _content = read_to_string("trylock.test")?;
+
+        file.unlock()?;
+        check_try_lock_example(b"SUCCESS\n")?;
+        Ok(())
+    }
 
     #[cfg(all(feature = "std", any(not(unix), feature = "multilock")))]
     #[test]
-    fn exclusive_lock_cases() -> Result<(), crate::Error> {
-        let mut f1 = crate::LockFile::open_excl("lock2.test")?;
-        let mut f2 = crate::LockFile::open_excl("lock2.test")?;
+    fn exclusive_lock_cases() -> Result<(), Error> {
+        let mut f1 = LockFile::open_excl("lock2.test")?;
+        let mut f2 = LockFile::open_excl("lock2.test")?;
 
         // f1 will get the lock; f2 can't.
         assert!(f1.try_lock()?);
