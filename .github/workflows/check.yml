@@ -5,6 +5,8 @@ jobs:
   check-linux:
     name: Check Linux
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: full
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -36,6 +38,8 @@ jobs:
   check-windows:
     name: Check Windows
     runs-on: windows-latest
+    env:
+      RUST_BACKTRACE: full
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -67,6 +71,8 @@ jobs:
   test-linux:
     name: Test Suite on Linux
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: full
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -98,6 +104,8 @@ jobs:
   test-windows:
     name: Test Suite on Windows
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: full
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2

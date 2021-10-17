@@ -8,6 +8,8 @@ jobs:
   docs:
     name: Documentation
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: full
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
