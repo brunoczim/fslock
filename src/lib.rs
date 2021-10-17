@@ -13,7 +13,7 @@
 //! use fslock::LockFile;
 //! fn main() -> Result<(), fslock::Error> {
 //!
-//!     let mut file = LockFile::open("mylock.test")?;
+//!     let mut file = LockFile::open("testfiles/mylock.lock")?;
 //!     file.lock()?;
 //!     do_stuff();
 //!     file.unlock()?;
@@ -87,7 +87,7 @@ pub use crate::{
 /// # fn main() -> Result<(), fslock::Error> {
 /// use fslock::LockFile;
 ///
-/// let mut file = LockFile::open("mylock.test")?;
+/// let mut file = LockFile::open("testfiles/mylock.lock")?;
 /// file.lock()?;
 /// do_stuff();
 /// file.unlock()?;
@@ -122,7 +122,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open_excl("mylock.test")?;
+    /// let mut file = LockFile::open_excl("testfiles/mylock.lock")?;
     ///
     /// # Ok(())
     /// # }
@@ -134,8 +134,8 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut lock1 = LockFile::open_excl("mylock.test")?;
-    /// let mut lock2 = LockFile::open_excl("mylock.test")?;
+    /// let mut lock1 = LockFile::open_excl("testfiles/mylock.lock")?;
+    /// let mut lock2 = LockFile::open_excl("testfiles/mylock.lock")?;
     ///
     /// lock1.lock()?;
     /// // We're holding the lock via lock1: locking via lock2 will fail.
@@ -212,7 +212,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/regular.lock")?;
     ///
     /// # Ok(())
     /// # }
@@ -260,7 +260,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/target.lock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -278,7 +278,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/panicking.lock")?;
     /// file.lock()?;
     /// file.lock()?;
     ///
@@ -314,13 +314,13 @@ impl LockFile {
     /// use fslock::LockFile;
     /// use std::fs::read_to_string;
     ///
-    /// let mut file = LockFile::open("lockwithpid.test")?;
+    /// let mut file = LockFile::open("testfiles/withpid.lock")?;
     /// file.lock_with_pid()?;
     /// do_stuff()?;
     /// file.unlock()?;
     ///
     /// fn do_stuff() -> Result<(), fslock::Error> {
-    ///     let mut content = read_to_string("lockwithpid.test")?;
+    ///     let mut content = read_to_string("testfiles/withpid.lock")?;
     ///     assert!(content.trim().len() > 0);
     ///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));
     ///     Ok(())
@@ -355,7 +355,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/attempt.lock")?;
     /// if file.try_lock()? {
     ///     do_stuff();
     ///     file.unlock()?;
@@ -374,7 +374,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/attempt.lock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -405,7 +405,7 @@ impl LockFile {
     /// use fslock::LockFile;
     /// # fn main() -> Result<(), fslock::Error> {
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/maybeowned.lock")?;
     /// do_stuff_with_lock(&mut file);
     /// if !file.owns_lock() {
     ///     file.lock()?;
@@ -438,7 +438,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/endinglock.lock")?;
     /// file.lock()?;
     /// do_stuff();
     /// file.unlock()?;
@@ -456,7 +456,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("mylock.test")?;
+    /// let mut file = LockFile::open("testfiles/endinglock.lock")?;
     /// file.unlock()?;
     ///
     /// # Ok(())
