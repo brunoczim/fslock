@@ -321,10 +321,20 @@ pub fn truncate(fd: FileDesc) -> Result<(), Error> {
     }
 }
 
+fn seek_start(fd: FileDesc) -> Result<(), Error> {
+    let res = unsafe { libc::lseek(fd, 0, libc::SEEK_SET) };
+    if res >= 0 {
+        Ok(())
+    } else {
+        Err(Error::last_os_error())
+    }
+}
+
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(fd: FileDesc) -> Result<(), Error> {
+    seek_start(fd)?;
     let res = unsafe { lockf(fd, libc::F_LOCK, 0) };
-    if res == 0 {
+    if res >= 0 {
         Ok(())
     } else {
         Err(Error::last_os_error())
@@ -333,6 +343,7 @@ pub fn lock(fd: FileDesc) -> Result<(), Error> {
 
 /// Tries to lock a file but returns as soon as possible if already locked.
 pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
+    seek_start(fd)?;
     let res = unsafe { lockf(fd, libc::F_TLOCK, 0) };
     if res == 0 {
         Ok(true)
@@ -348,6 +359,7 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
 
 /// Unlocks the file.
 pub fn unlock(fd: FileDesc) -> Result<(), Error> {
+    seek_start(fd)?;
     let res = unsafe { lockf(fd, libc::F_ULOCK, 0) };
     if res == 0 {
         Ok(())

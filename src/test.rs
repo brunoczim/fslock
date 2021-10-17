@@ -65,6 +65,7 @@ fn other_process_but_curr_reads() -> Result<(), Error> {
     let mut file = LockFile::open(path)?;
     file.lock()?;
 
+    check_try_lock_example(path, b"FAILURE\n")?;
     let mut _content = read_to_string(path)?;
     check_try_lock_example(path, b"FAILURE\n")?;
 
