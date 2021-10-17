@@ -92,5 +92,6 @@ impl Write for Adapter {
 impl Drop for Adapter {
     fn drop(&mut self) {
         let _ = self.flush();
+        let _ = sys::fsync(self.desc);
     }
 }

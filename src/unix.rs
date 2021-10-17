@@ -301,6 +301,16 @@ pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
     Ok(())
 }
 
+pub fn fsync(fd: FileDesc) -> Result<(), Error> {
+    let result = unsafe { libc::fsync(fd) };
+
+    if result >= 0 {
+        Ok(())
+    } else {
+        Err(Error::last_os_error())
+    }
+}
+
 /// Truncates the file referenced by the given file descriptor.
 pub fn truncate(fd: FileDesc) -> Result<(), Error> {
     let res = unsafe { libc::ftruncate(fd, 0) };

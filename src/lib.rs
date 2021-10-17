@@ -474,9 +474,7 @@ impl LockFile {
 impl Drop for LockFile {
     fn drop(&mut self) {
         if self.locked {
-            let _ = sys::unlock(self.desc);
-            self.id.release_lock();
-            self.locked = false;
+            let _ = self.unlock();
         }
         sys::close(self.desc);
     }
@@ -522,7 +520,7 @@ mod test {
     #[cfg(feature = "std")]
     #[test]
     fn other_process() -> Result<(), Error> {
-        let mut file = LockFile::open("trylock.test")?;
+        let mut file = LockFile::open("examplelock.test")?;
         file.lock()?;
         check_try_lock_example(b"FAILURE\n")?;
         file.unlock()?;
@@ -535,11 +533,11 @@ mod test {
     fn other_process_but_curr_reads() -> Result<(), Error> {
         use std::fs::read_to_string;
 
-        let mut file = LockFile::open("trylock.test")?;
+        let mut file = LockFile::open("examplelock.test")?;
         file.lock()?;
-        check_try_lock_example(b"FAILURE\n")?;
 
-        let mut _content = read_to_string("trylock.test")?;
+        let mut _content = read_to_string("examplelock.test")?;
+        check_try_lock_example(b"FAILURE\n")?;
 
         file.unlock()?;
         check_try_lock_example(b"SUCCESS\n")?;

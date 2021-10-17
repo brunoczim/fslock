@@ -414,6 +414,15 @@ pub fn write(handle: FileDesc, bytes: &[u8]) -> Result<(), Error> {
     }
 }
 
+pub fn fsync(handle: FileDesc) -> Result<(), Error> {
+    let result = unsafe { FlushFileBuffers(handle) };
+    if result == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 /// Truncates the file referenced by the given HANDLE.
 pub fn truncate(handle: FileDesc) -> Result<(), Error> {
     let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
