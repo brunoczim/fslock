@@ -316,9 +316,13 @@ impl LockFile {
     ///
     /// let mut file = LockFile::open("testfiles/withpid.lock")?;
     /// file.lock_with_pid()?;
+    /// # #[cfg(feature = "std")]
+    /// # {
     /// do_stuff()?;
+    /// # }
     /// file.unlock()?;
     ///
+    /// # #[cfg(feature = "std")]
     /// fn do_stuff() -> Result<(), fslock::Error> {
     ///     let mut content = read_to_string("testfiles/withpid.lock")?;
     ///     assert!(content.trim().len() > 0);

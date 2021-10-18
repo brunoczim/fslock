@@ -1,6 +1,9 @@
+#[cfg(feature = "std")]
 use fslock::LockFile;
+#[cfg(feature = "std")]
 use std::{env, io, io::Read, process};
 
+#[cfg(feature = "std")]
 fn main() -> Result<(), fslock::Error> {
     let mut args = env::args();
     args.next();
@@ -18,3 +21,6 @@ fn main() -> Result<(), fslock::Error> {
 
     Ok(())
 }
+
+#[cfg(not(feature = "std"))]
+fn main() {}
