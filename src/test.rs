@@ -73,33 +73,3 @@ fn other_process_but_curr_reads() -> Result<(), Error> {
     check_try_lock_example(path, b"SUCCESS\n")?;
     Ok(())
 }
-
-#[cfg(all(feature = "std", any(not(unix), feature = "multilock")))]
-#[test]
-fn exclusive_lock_cases() -> Result<(), Error> {
-    let path = "testfiles/exclusive_lock_cases.lock";
-
-    let mut f1 = LockFile::open_excl(path)?;
-    let mut f2 = LockFile::open_excl(path)?;
-
-    // f1 will get the lock; f2 can't.
-    assert!(f1.try_lock()?);
-    assert!(!f2.try_lock()?);
-
-    // have f2 wait for f1.
-    let thr = std::thread::spawn(move || {
-        f2.lock().unwrap();
-        f2
-    });
-
-    // Sleep here a little, so that the other thread has time to
-    // block on the fd-lock.
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    drop(f1); // Causes f1 to unlock.
-
-    let f2 = thr.join().unwrap();
-
-    assert!(f2.owns_lock());
-
-    Ok(())
-}

@@ -5,8 +5,9 @@
 //!
 //! # Types
 //! Currently, only one type is provided: [`LockFile`]. It does not destroy the
-//! file after closed and behaviour on locking different file handles owned by
-//! the same process is different between Unix and Windows. # Example:
+//! file after closed. Locks are per-handle and not by per-process in any
+//! platform. On Unix, however, under `fork` file descriptors might be
+//! duplicated sharing the same lock, but `fork` is usually `unsafe` in Rust.
 //!
 //! # Example
 //! ```
@@ -33,33 +34,8 @@ mod unix;
 #[cfg(unix)]
 use crate::unix as sys;
 
-#[cfg(all(unix, feature = "multilock"))]
-mod unix_fileid;
-#[cfg(all(unix, feature = "multilock"))]
-use unix_fileid as fileid;
-#[cfg(not(all(unix, feature = "multilock")))]
-mod nil_fileid;
-#[cfg(not(all(unix, feature = "multilock")))]
-use nil_fileid as fileid;
-
 mod string;
 mod fmt;
-
-/// Enumeration used to declare whether FsLock instances opened with the same
-/// file, by the same process, are exclusive.
-#[derive(Debug, Copy, Clone)]
-#[non_exhaustive]
-enum Exclusivity {
-    /// Treat any two file descriptors to the same file as having
-    /// separate locks.
-    ///
-    /// This option requires allocation internally, and is not
-    /// available on Unix when building without the `std` feature.
-    #[cfg(any(not(unix), feature = "multilock"))]
-    PerFileDesc,
-    /// Os-dependent behavior.
-    OsDependent,
-}
 
 #[cfg(windows)]
 mod windows;
@@ -72,15 +48,10 @@ pub use crate::{
 };
 
 #[derive(Debug)]
-/// A handle to a file that is lockable. Does not delete the file.
-///
-/// # Multiple Handles/Descriptors To The Same File
-///
-/// The underlying file locking code behaves differently on Windows
-/// and Unix when the same process tries to lock the same file via two
-/// different LockFiles.  See [`LockFile::open()`] for more
-/// information.  You can work around this OS dependency by using
-/// [`LockFile::open_excl()`].
+/// A handle to a file that is lockable. Does not delete the file. On both
+/// Unix and Windows, the lock is held by an individual handle, and not by the
+/// whole process. On Unix, however, under `fork` file descriptors might be
+/// duplicated sharing the same lock, but `fork` is usually `unsafe` in Rust.
 ///
 /// # Example
 /// ```
@@ -100,108 +71,21 @@ pub use crate::{
 /// ```
 pub struct LockFile {
     locked: bool,
-    id: fileid::FileId,
     desc: sys::FileDesc,
 }
 
 impl LockFile {
-    /// Opens a file for locking. Exclusive here means the lock is exclusive to
-    /// a file descriptor/handle on all platforms, instead of Unix's behaviour
-    /// of locking for the whole process. Do not confuse "exclusive" with the
-    /// terminology of Linux's and BSD's flock system call.
-    ///
-    /// On Unix, if the path is nul-terminated (ends with 0), no extra
-    /// allocation will be made.
-    ///
-    /// # Panics
-    /// Panics if the path contains a nul-byte in a place other than the end.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::LockFile;
-    ///
-    /// let mut file = LockFile::open_excl("testfiles/mylock.lock")?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Example with multiple locks.
-    ///
-    /// ```
-    /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::LockFile;
-    ///
-    /// let mut lock1 = LockFile::open_excl("testfiles/mylock.lock")?;
-    /// let mut lock2 = LockFile::open_excl("testfiles/mylock.lock")?;
-    ///
-    /// lock1.lock()?;
-    /// // We're holding the lock via lock1: locking via lock2 will fail.
-    /// assert_eq!(lock2.try_lock()?, false);
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Panicking Example
-    ///
-    /// ```should_panic
-    /// # fn main() -> Result<(), fslock::Error> {
-    /// use fslock::LockFile;
-    ///
-    /// let mut file = LockFile::open("my\0lock")?;
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
-    /// # Availability
-    ///
-    /// This function is only available on Unix when the `multilock`
-    /// feature is enabled.
-    #[cfg(any(not(unix), feature = "multilock"))]
-    pub fn open_excl<P>(path: &P) -> Result<Self, Error>
-    where
-        P: ToOsStr + ?Sized,
-    {
-        Self::open_internal(path, Exclusivity::PerFileDesc)
-    }
-
     /// Opens a file for locking, with OS-dependent locking behavior. On Unix,
-    /// if the path is nul-terminated (ends with 0), no extra
-    /// allocation will be made.
-    ///
-    /// # Multiple Handles/Descriptors to the same file.
-    ///
-    /// This function replicates the underlying OS behavior from file
-    /// locking, which gives different results on Windows and Unix
-    /// when the same process tries to lock the same file more than
-    /// once.
-    ///
-    /// Windows treats each _handle_ to a file as having its own lock,
-    /// whereas Unix treats all descriptors for a file as sharing a
-    /// lock for the whole process.  This means that on Windows you may
-    /// open a file, lock it, open it again, and when you try to lock the
-    /// second handle, it will block until the first lock is
-    /// released. Meanwhile, Unix will check whether your process already
-    /// owns the look, see that you already locked the file, and simply
-    /// return as you already have the lock! It will only block if there
-    /// is a _different_ process holding the lock. Also, unlocking one
-    /// file descriptor on unix will unlock the file for the whole
-    /// process.
-    ///
-    /// For consistent behavior across operating systems, you can
-    /// either make sure that the same file is never locked more than
-    /// once by the same process, or you can use the
-    /// [`LockFile::open_excl()`] call instead (which requires
-    /// `multilock` and `std` on Unix).
+    /// if the path is nul-terminated (ends with 0), no extra allocation will be
+    /// made.
     ///
     /// # Compatibility
     ///
-    /// The lock files returned by this method can exhibit
-    /// OS-dependent behavior: See "Multiple Handles/Descriptors To
-    /// The Same File" in the documentation for [`LockFile`].
+    /// This crate used to behave differently in regards to Unix and Windows,
+    /// when locks on Unix were per-process and not per-handle. However, the
+    /// current version locks per-handle on any platform. On Unix, however,
+    /// under `fork` file descriptors might be duplicated sharing the same lock,
+    /// but `fork` is usually `unsafe` in Rust.
     ///
     /// # Panics
     /// Panics if the path contains a nul-byte in a place other than the end.
@@ -233,18 +117,9 @@ impl LockFile {
     where
         P: ToOsStr + ?Sized,
     {
-        Self::open_internal(path, Exclusivity::OsDependent)
-    }
-
-    /// Implementation helper for open_excl and open.
-    fn open_internal<P>(path: &P, ex: Exclusivity) -> Result<Self, Error>
-    where
-        P: ToOsStr + ?Sized,
-    {
         let path = path.to_os_str()?;
         let desc = sys::open(path.as_ref())?;
-        let id = fileid::FileId::get_id(desc, ex)?;
-        Ok(Self { locked: false, id, desc })
+        Ok(Self { locked: false, desc })
     }
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
@@ -289,12 +164,7 @@ impl LockFile {
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
-        self.id.take_lock();
-        // We got the fileid lock; now try to lock the file.
-        if let Err(error) = sys::lock(self.desc) {
-            self.id.release_lock();
-            return Err(error);
-        }
+        sys::lock(self.desc)?;
         self.locked = true;
         Ok(())
     }
@@ -389,17 +259,11 @@ impl LockFile {
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
-        if self.id.try_take_lock() {
-            // We got the fileid lock; now try to lock the file.
-            let lock_result = sys::try_lock(self.desc);
-            match lock_result {
-                Ok(true) => self.locked = true,
-                _ => self.id.release_lock(),
-            }
-            lock_result
-        } else {
-            Ok(false)
+        let lock_result = sys::try_lock(self.desc);
+        if let Ok(true) = lock_result {
+            self.locked = true;
         }
+        lock_result
     }
 
     /// Returns whether this file handle owns the lock.
@@ -473,7 +337,6 @@ impl LockFile {
         self.locked = false;
         sys::unlock(self.desc)?;
         sys::truncate(self.desc)?;
-        self.id.release_lock();
         Ok(())
     }
 }
