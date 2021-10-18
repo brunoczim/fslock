@@ -358,8 +358,8 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
             let mut uninit = MaybeUninit::<OVERLAPPED_u>::uninit();
             unsafe {
                 let mut refer = (&mut *uninit.as_mut_ptr()).s_mut();
-                refer.Offset = DWORD::max_value();
-                refer.OffsetHigh = DWORD::max_value();
+                refer.Offset = DWORD::max_value() - 1;
+                refer.OffsetHigh = DWORD::max_value() - 1;
                 uninit.assume_init()
             }
         },
