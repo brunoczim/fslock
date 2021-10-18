@@ -4,16 +4,6 @@ use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 #[cfg(feature = "std")]
 use std::{ffi, os::unix::ffi::OsStrExt};
 
-extern "C" {
-    /// [Linux man page](https://linux.die.net/man/3/lockf)
-    fn lockf(
-        fd: libc::c_int,
-        cmd: libc::c_int,
-        offset: libc::off_t,
-    ) -> libc::c_int;
-
-}
-
 #[cfg(not(feature = "std"))]
 extern "C" {
     /// Yeah, I had to copy this from std
@@ -321,19 +311,9 @@ pub fn truncate(fd: FileDesc) -> Result<(), Error> {
     }
 }
 
-fn seek_start(fd: FileDesc) -> Result<(), Error> {
-    let res = unsafe { libc::lseek(fd, 0, libc::SEEK_SET) };
-    if res >= 0 {
-        Ok(())
-    } else {
-        Err(Error::last_os_error())
-    }
-}
-
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(fd: FileDesc) -> Result<(), Error> {
-    seek_start(fd)?;
-    let res = unsafe { lockf(fd, libc::F_LOCK, 0) };
+    let res = unsafe { libc::flock(fd, libc::LOCK_EX) };
     if res >= 0 {
         Ok(())
     } else {
@@ -343,13 +323,12 @@ pub fn lock(fd: FileDesc) -> Result<(), Error> {
 
 /// Tries to lock a file but returns as soon as possible if already locked.
 pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
-    seek_start(fd)?;
-    let res = unsafe { lockf(fd, libc::F_TLOCK, 0) };
-    if res == 0 {
+    let res = unsafe { libc::flock(fd, libc::LOCK_EX | libc::LOCK_NB) };
+    if res >= 0 {
         Ok(true)
     } else {
         let err = errno();
-        if err == libc::EACCES || err == libc::EAGAIN {
+        if err == libc::EWOULDBLOCK || err == libc::EINTR {
             Ok(false)
         } else {
             Err(Error::from_raw_os_error(err as i32))
@@ -359,9 +338,8 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
 
 /// Unlocks the file.
 pub fn unlock(fd: FileDesc) -> Result<(), Error> {
-    seek_start(fd)?;
-    let res = unsafe { lockf(fd, libc::F_ULOCK, 0) };
-    if res == 0 {
+    let res = unsafe { libc::flock(fd, libc::LOCK_UN) };
+    if res >= 0 {
         Ok(())
     } else {
         Err(Error::last_os_error())
