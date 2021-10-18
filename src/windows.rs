@@ -448,8 +448,8 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK,
             0,
-            DWORD::max_value(),
-            DWORD::max_value(),
+            0,
+            0,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -478,8 +478,8 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
             0,
-            DWORD::max_value(),
-            DWORD::max_value(),
+            0,
+            0,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -509,13 +509,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
     let drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
-        UnlockFileEx(
-            handle,
-            0,
-            DWORD::max_value(),
-            DWORD::max_value(),
-            &mut overlapped as LPOVERLAPPED,
-        )
+        UnlockFileEx(handle, 0, 0, 0, &mut overlapped as LPOVERLAPPED)
     };
 
     let ret = if res == TRUE {
