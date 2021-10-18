@@ -358,8 +358,8 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
             let mut uninit = MaybeUninit::<OVERLAPPED_u>::uninit();
             unsafe {
                 let mut refer = (&mut *uninit.as_mut_ptr()).s_mut();
-                refer.Offset = 0;
-                refer.OffsetHigh = 0;
+                refer.Offset = WORD::max_value();
+                refer.OffsetHigh = WORD::max_value();
                 uninit.assume_init()
             }
         },
@@ -448,8 +448,8 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK,
             0,
-            0,
-            0,
+            1,
+            1,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -478,8 +478,8 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
             0,
-            0,
-            0,
+            1,
+            1,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -509,7 +509,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
     let drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
-        UnlockFileEx(handle, 0, 0, 0, &mut overlapped as LPOVERLAPPED)
+        UnlockFileEx(handle, 0, 1, 1, &mut overlapped as LPOVERLAPPED)
     };
 
     let ret = if res == TRUE {
