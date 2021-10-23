@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../fslock/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input"name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../fslock/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -362,321 +362,23 @@
 <span id="362">362</span>
 <span id="363">363</span>
 <span id="364">364</span>
-<span id="365">365</span>
-<span id="366">366</span>
-<span id="367">367</span>
-<span id="368">368</span>
-<span id="369">369</span>
-<span id="370">370</span>
-<span id="371">371</span>
-<span id="372">372</span>
-<span id="373">373</span>
-<span id="374">374</span>
-<span id="375">375</span>
-<span id="376">376</span>
-<span id="377">377</span>
-<span id="378">378</span>
-<span id="379">379</span>
-<span id="380">380</span>
-<span id="381">381</span>
-<span id="382">382</span>
-<span id="383">383</span>
-<span id="384">384</span>
-<span id="385">385</span>
-<span id="386">386</span>
-<span id="387">387</span>
-<span id="388">388</span>
-<span id="389">389</span>
-<span id="390">390</span>
-<span id="391">391</span>
-<span id="392">392</span>
-<span id="393">393</span>
-<span id="394">394</span>
-<span id="395">395</span>
-<span id="396">396</span>
-<span id="397">397</span>
-<span id="398">398</span>
-<span id="399">399</span>
-<span id="400">400</span>
-<span id="401">401</span>
-<span id="402">402</span>
-<span id="403">403</span>
-<span id="404">404</span>
-<span id="405">405</span>
-<span id="406">406</span>
-<span id="407">407</span>
-<span id="408">408</span>
-<span id="409">409</span>
-<span id="410">410</span>
-<span id="411">411</span>
-<span id="412">412</span>
-<span id="413">413</span>
-<span id="414">414</span>
-<span id="415">415</span>
-<span id="416">416</span>
-<span id="417">417</span>
-<span id="418">418</span>
-<span id="419">419</span>
-<span id="420">420</span>
-<span id="421">421</span>
-<span id="422">422</span>
-<span id="423">423</span>
-<span id="424">424</span>
-<span id="425">425</span>
-<span id="426">426</span>
-<span id="427">427</span>
-<span id="428">428</span>
-<span id="429">429</span>
-<span id="430">430</span>
-<span id="431">431</span>
-<span id="432">432</span>
-<span id="433">433</span>
-<span id="434">434</span>
-<span id="435">435</span>
-<span id="436">436</span>
-<span id="437">437</span>
-<span id="438">438</span>
-<span id="439">439</span>
-<span id="440">440</span>
-<span id="441">441</span>
-<span id="442">442</span>
-<span id="443">443</span>
-<span id="444">444</span>
-<span id="445">445</span>
-<span id="446">446</span>
-<span id="447">447</span>
-<span id="448">448</span>
-<span id="449">449</span>
-<span id="450">450</span>
-<span id="451">451</span>
-<span id="452">452</span>
-<span id="453">453</span>
-<span id="454">454</span>
-<span id="455">455</span>
-<span id="456">456</span>
-<span id="457">457</span>
-<span id="458">458</span>
-<span id="459">459</span>
-<span id="460">460</span>
-<span id="461">461</span>
-<span id="462">462</span>
-<span id="463">463</span>
-<span id="464">464</span>
-<span id="465">465</span>
-<span id="466">466</span>
-<span id="467">467</span>
-<span id="468">468</span>
-<span id="469">469</span>
-<span id="470">470</span>
-<span id="471">471</span>
-<span id="472">472</span>
-<span id="473">473</span>
-<span id="474">474</span>
-<span id="475">475</span>
-<span id="476">476</span>
-<span id="477">477</span>
-<span id="478">478</span>
-<span id="479">479</span>
-<span id="480">480</span>
-<span id="481">481</span>
-<span id="482">482</span>
-<span id="483">483</span>
-<span id="484">484</span>
-<span id="485">485</span>
-<span id="486">486</span>
-<span id="487">487</span>
-<span id="488">488</span>
-<span id="489">489</span>
-<span id="490">490</span>
-<span id="491">491</span>
-<span id="492">492</span>
-<span id="493">493</span>
-<span id="494">494</span>
-<span id="495">495</span>
-<span id="496">496</span>
-<span id="497">497</span>
-<span id="498">498</span>
-<span id="499">499</span>
-<span id="500">500</span>
-<span id="501">501</span>
-<span id="502">502</span>
-<span id="503">503</span>
-<span id="504">504</span>
-<span id="505">505</span>
-<span id="506">506</span>
-<span id="507">507</span>
-<span id="508">508</span>
-<span id="509">509</span>
-<span id="510">510</span>
-<span id="511">511</span>
-<span id="512">512</span>
-<span id="513">513</span>
-<span id="514">514</span>
-<span id="515">515</span>
-<span id="516">516</span>
-<span id="517">517</span>
-<span id="518">518</span>
-<span id="519">519</span>
-<span id="520">520</span>
-<span id="521">521</span>
-<span id="522">522</span>
-<span id="523">523</span>
-<span id="524">524</span>
-<span id="525">525</span>
-<span id="526">526</span>
-<span id="527">527</span>
-<span id="528">528</span>
-<span id="529">529</span>
-<span id="530">530</span>
-<span id="531">531</span>
-<span id="532">532</span>
-<span id="533">533</span>
-<span id="534">534</span>
-<span id="535">535</span>
-<span id="536">536</span>
-<span id="537">537</span>
-<span id="538">538</span>
-<span id="539">539</span>
-<span id="540">540</span>
-<span id="541">541</span>
-<span id="542">542</span>
-<span id="543">543</span>
-<span id="544">544</span>
-<span id="545">545</span>
-<span id="546">546</span>
-<span id="547">547</span>
-<span id="548">548</span>
-<span id="549">549</span>
-<span id="550">550</span>
-<span id="551">551</span>
-<span id="552">552</span>
-<span id="553">553</span>
-<span id="554">554</span>
-<span id="555">555</span>
-<span id="556">556</span>
-<span id="557">557</span>
-<span id="558">558</span>
-<span id="559">559</span>
-<span id="560">560</span>
-<span id="561">561</span>
-<span id="562">562</span>
-<span id="563">563</span>
-<span id="564">564</span>
-<span id="565">565</span>
-<span id="566">566</span>
-<span id="567">567</span>
-<span id="568">568</span>
-<span id="569">569</span>
-<span id="570">570</span>
-<span id="571">571</span>
-<span id="572">572</span>
-<span id="573">573</span>
-<span id="574">574</span>
-<span id="575">575</span>
-<span id="576">576</span>
-<span id="577">577</span>
-<span id="578">578</span>
-<span id="579">579</span>
-<span id="580">580</span>
-<span id="581">581</span>
-<span id="582">582</span>
-<span id="583">583</span>
-<span id="584">584</span>
-<span id="585">585</span>
-<span id="586">586</span>
-<span id="587">587</span>
-<span id="588">588</span>
-<span id="589">589</span>
-<span id="590">590</span>
-<span id="591">591</span>
-<span id="592">592</span>
-<span id="593">593</span>
-<span id="594">594</span>
-<span id="595">595</span>
-<span id="596">596</span>
-<span id="597">597</span>
-<span id="598">598</span>
-<span id="599">599</span>
-<span id="600">600</span>
-<span id="601">601</span>
-<span id="602">602</span>
-<span id="603">603</span>
-<span id="604">604</span>
-<span id="605">605</span>
-<span id="606">606</span>
-<span id="607">607</span>
-<span id="608">608</span>
-<span id="609">609</span>
-<span id="610">610</span>
-<span id="611">611</span>
-<span id="612">612</span>
-<span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
-<span id="622">622</span>
-<span id="623">623</span>
-<span id="624">624</span>
-<span id="625">625</span>
-<span id="626">626</span>
-<span id="627">627</span>
-<span id="628">628</span>
-<span id="629">629</span>
-<span id="630">630</span>
-<span id="631">631</span>
-<span id="632">632</span>
-<span id="633">633</span>
-<span id="634">634</span>
-<span id="635">635</span>
-<span id="636">636</span>
-<span id="637">637</span>
-<span id="638">638</span>
-<span id="639">639</span>
-<span id="640">640</span>
-<span id="641">641</span>
-<span id="642">642</span>
-<span id="643">643</span>
-<span id="644">644</span>
-<span id="645">645</span>
-<span id="646">646</span>
-<span id="647">647</span>
-<span id="648">648</span>
-<span id="649">649</span>
-<span id="650">650</span>
-<span id="651">651</span>
-<span id="652">652</span>
-<span id="653">653</span>
-<span id="654">654</span>
-<span id="655">655</span>
-<span id="656">656</span>
-<span id="657">657</span>
-<span id="658">658</span>
-<span id="659">659</span>
-<span id="660">660</span>
-<span id="661">661</span>
-<span id="662">662</span>
-</pre><pre class="rust">
-<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">no_std</span>)]</span>
+</pre><pre class="rust"><code><span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">no_std</span>)]</span>
 
 <span class="doccomment">//! API to use files as a lock. Supports non-std crates by disabling feature</span>
 <span class="doccomment">//! `std`.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Types</span>
 <span class="doccomment">//! Currently, only one type is provided: [`LockFile`]. It does not destroy the</span>
-<span class="doccomment">//! file after closed and behaviour on locking different file handles owned by</span>
-<span class="doccomment">//! the same process is different between Unix and Windows. # Example:</span>
+<span class="doccomment">//! file after closed. Locks are per-handle and not by per-process in any</span>
+<span class="doccomment">//! platform. On Unix, however, under `fork` file descriptors might be</span>
+<span class="doccomment">//! duplicated sharing the same lock, but `fork` is usually `unsafe` in Rust.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Example</span>
 <span class="doccomment">//! ```</span>
 <span class="doccomment">//! use fslock::LockFile;</span>
 <span class="doccomment">//! fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//!     let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+<span class="doccomment">//!     let mut file = LockFile::open(&quot;testfiles/mylock.lock&quot;)?;</span>
 <span class="doccomment">//!     file.lock()?;</span>
 <span class="doccomment">//!     do_stuff();</span>
 <span class="doccomment">//!     file.unlock()?;</span>
@@ -688,243 +390,39 @@
 <span class="doccomment">//! # }</span>
 <span class="doccomment">//! ```</span>
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="kw">mod</span> <span class="ident">test</span>;
+
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
 <span class="kw">mod</span> <span class="ident">unix</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">unix</span>)]</span>
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::unix</span> <span class="kw">as</span> <span class="ident">sys</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::unix</span> <span class="kw">as</span> <span class="ident">sys</span>;
 
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">unix</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>))]</span>
-<span class="kw">mod</span> <span class="ident">unix_fileid</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">unix</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>))]</span>
-<span class="kw">use</span> <span class="ident">unix_fileid</span> <span class="kw">as</span> <span class="ident">fileid</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">all</span>(<span class="ident">unix</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>)))]</span>
-<span class="kw">mod</span> <span class="ident">nil_fileid</span>;
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">all</span>(<span class="ident">unix</span>, <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>)))]</span>
-<span class="kw">use</span> <span class="ident">nil_fileid</span> <span class="kw">as</span> <span class="ident">fileid</span>;
-
-<span class="doccomment">/// Enumeration used to declare whether FsLock instances opened with the same</span>
-<span class="doccomment">/// file, by the same process, are exclusive.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
-<span class="attribute">#[<span class="ident">non_exhaustive</span>]</span>
-<span class="kw">enum</span> <span class="ident">Exclusivity</span> {
-    <span class="doccomment">/// Treat any two file descriptors to the same file as having</span>
-    <span class="doccomment">/// separate locks.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This option requires allocation internally, and is not</span>
-    <span class="doccomment">/// available on Unix when building without the `std` feature.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">not</span>(<span class="ident">unix</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>))]</span>
-    <span class="ident">PerFileDesc</span>,
-    <span class="doccomment">/// Os-dependent behavior.</span>
-    <span class="ident">OsDependent</span>,
-}
+<span class="kw">mod</span> <span class="ident">string</span>;
+<span class="kw">mod</span> <span class="ident">fmt</span>;
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
 <span class="kw">mod</span> <span class="ident">windows</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
-<span class="kw">use</span> <span class="kw">crate</span><span class="ident">::windows</span> <span class="kw">as</span> <span class="ident">sys</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::windows</span> <span class="kw">as</span> <span class="ident">sys</span>;
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span><span class="ident">::sys</span>::{<span class="ident">Error</span>, <span class="ident">OsStr</span>, <span class="ident">OsString</span>};
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">std</span>::{
-    <span class="ident">ffi</span>,
-    <span class="ident">path</span>::{<span class="ident">Path</span>, <span class="ident">PathBuf</span>},
+<span class="kw">pub</span> <span class="kw">use</span> <span class="kw">crate</span>::{
+    <span class="ident">string</span>::{<span class="ident">EitherOsStr</span>, <span class="ident">IntoOsString</span>, <span class="ident">ToOsStr</span>},
+    <span class="ident">sys</span>::{<span class="ident">Error</span>, <span class="ident">OsStr</span>, <span class="ident">OsString</span>},
 };
 
-<span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">ops::Deref</span>};
-
-<span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">to_os_str</span>()
-            .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">str</span><span class="op">|</span> <span class="ident">str</span>.<span class="ident">into_os_string</span>())
-            .<span class="ident">expect</span>(<span class="string">&quot;Allocation error&quot;</span>)
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
-        <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.<span class="ident">as_ref</span>())
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
-        <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">as_ref</span>())
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">OsStr</span>;
-
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
-        <span class="self">self</span>.<span class="ident">as_ref</span>()
-    }
-}
-
-<span class="doccomment">/// Either borrowed or owned allocation of an OS-native string.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Borrowed allocation.</span>
-    <span class="ident">Borrowed</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">OsStr</span>),
-    <span class="doccomment">/// Owned allocation.</span>
-    <span class="ident">Owned</span>(<span class="ident">OsString</span>),
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">OsStr</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="self">Self</span><span class="ident">::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">str</span>,
-            <span class="self">Self</span><span class="ident">::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">string</span>.<span class="ident">as_ref</span>(),
-        }
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">OsStr</span>;
-
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
-        <span class="self">self</span>.<span class="ident">as_ref</span>()
-    }
-}
-
-<span class="doccomment">/// Conversion of anything into an owned OS-native string. If allocation fails,</span>
-<span class="doccomment">/// an error shall be returned.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">IntoOsString</span> {
-    <span class="doccomment">/// Converts with possible allocation error.</span>
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-}
-
-<span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>)
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="kw">match</span> <span class="self">self</span> {
-            <span class="self">Self</span><span class="ident">::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">str</span>.<span class="ident">into_os_string</span>(),
-            <span class="self">Self</span><span class="ident">::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">string</span>),
-        }
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">ffi::OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">PathBuf</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">Path</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="ident">AsRef</span>::<span class="op">&lt;</span><span class="ident">ffi::OsStr</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="self">self</span>).<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">ffi::OsString</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">str</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
-    }
-}
-
-<span class="doccomment">/// Conversion of anything to an either borrowed or owned OS-native string. If</span>
-<span class="doccomment">/// allocation fails, an error shall be returned.</span>
-<span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ToOsStr</span> {
-    <span class="doccomment">/// Converts with possible allocation error.</span>
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
-}
-
-<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">EitherOsStr::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> {
-                <span class="ident">EitherOsStr::Owned</span>(<span class="ident">string</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()<span class="question-mark">?</span>)
-            },
-            <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>),
-        })
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">EitherOsStr::Borrowed</span>(<span class="self">self</span>))
-    }
-}
-
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">EitherOsStr::Borrowed</span>(<span class="self">self</span>.<span class="ident">as_ref</span>()))
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">ffi::OsString</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">PathBuf</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">Path</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
-        <span class="ident">AsRef</span>::<span class="op">&lt;</span><span class="ident">ffi::OsStr</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="self">self</span>).<span class="ident">to_os_str</span>()
-    }
-}
-
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
-<span class="doccomment">/// A handle to a file that is lockable. Does not delete the file.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// # Multiple Handles/Descriptors To The Same File</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// The underlying file locking code behaves differently on Windows</span>
-<span class="doccomment">/// and Unix when the same process tries to lock the same file via two</span>
-<span class="doccomment">/// different LockFiles.  See [`LockFile::open()`] for more</span>
-<span class="doccomment">/// information.  You can work around this OS dependency by using</span>
-<span class="doccomment">/// [`LockFile::open_excl()`].</span>
+<span class="doccomment">/// A handle to a file that is lockable. Does not delete the file. On both</span>
+<span class="doccomment">/// Unix and Windows, the lock is held by an individual handle, and not by the</span>
+<span class="doccomment">/// whole process. On Unix, however, under `fork` file descriptors might be</span>
+<span class="doccomment">/// duplicated sharing the same lock, but `fork` is usually `unsafe` in Rust.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
 <span class="doccomment">/// use fslock::LockFile;</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+<span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/mylock.lock&quot;)?;</span>
 <span class="doccomment">/// file.lock()?;</span>
 <span class="doccomment">/// do_stuff();</span>
 <span class="doccomment">/// file.unlock()?;</span>
@@ -937,108 +435,21 @@
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">LockFile</span> {
     <span class="ident">locked</span>: <span class="ident">bool</span>,
-    <span class="ident">id</span>: <span class="ident">fileid::FileId</span>,
     <span class="ident">desc</span>: <span class="ident">sys::FileDesc</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">LockFile</span> {
-    <span class="doccomment">/// Opens a file for locking. Exclusive here means the lock is exclusive to</span>
-    <span class="doccomment">/// a file descriptor/handle on all platforms, instead of Unix&#39;s behaviour</span>
-    <span class="doccomment">/// of locking for the whole process. Do not confuse &quot;exclusive&quot; with the</span>
-    <span class="doccomment">/// terminology of Linux&#39;s and BSD&#39;s flock system call.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// On Unix, if the path is nul-terminated (ends with 0), no extra</span>
-    <span class="doccomment">/// allocation will be made.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panics</span>
-    <span class="doccomment">/// Panics if the path contains a nul-byte in a place other than the end.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Example</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
-    <span class="doccomment">/// use fslock::LockFile;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open_excl(&quot;mylock.test&quot;)?;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Ok(())</span>
-    <span class="doccomment">/// # }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Example with multiple locks.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
-    <span class="doccomment">/// use fslock::LockFile;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut lock1 = LockFile::open_excl(&quot;mylock.test&quot;)?;</span>
-    <span class="doccomment">/// let mut lock2 = LockFile::open_excl(&quot;mylock.test&quot;)?;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// lock1.lock()?;</span>
-    <span class="doccomment">/// // We&#39;re holding the lock via lock1: locking via lock2 will fail.</span>
-    <span class="doccomment">/// assert_eq!(lock2.try_lock()?, false);</span>
-    <span class="doccomment">/// # Ok(())</span>
-    <span class="doccomment">/// # }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Panicking Example</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// ```should_panic</span>
-    <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
-    <span class="doccomment">/// use fslock::LockFile;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;my\0lock&quot;)?;</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Ok(())</span>
-    <span class="doccomment">/// # }</span>
-    <span class="doccomment">/// ```</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Availability</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function is only available on Unix when the `multilock`</span>
-    <span class="doccomment">/// feature is enabled.</span>
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">not</span>(<span class="ident">unix</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>))]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open_excl</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">P</span>: <span class="ident">ToOsStr</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
-    {
-        <span class="self">Self</span><span class="ident">::open_internal</span>(<span class="ident">path</span>, <span class="ident">Exclusivity::PerFileDesc</span>)
-    }
-
     <span class="doccomment">/// Opens a file for locking, with OS-dependent locking behavior. On Unix,</span>
-    <span class="doccomment">/// if the path is nul-terminated (ends with 0), no extra</span>
-    <span class="doccomment">/// allocation will be made.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// # Multiple Handles/Descriptors to the same file.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// This function replicates the underlying OS behavior from file</span>
-    <span class="doccomment">/// locking, which gives different results on Windows and Unix</span>
-    <span class="doccomment">/// when the same process tries to lock the same file more than</span>
-    <span class="doccomment">/// once.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// Windows treats each _handle_ to a file as having its own lock,</span>
-    <span class="doccomment">/// whereas Unix treats all descriptors for a file as sharing a</span>
-    <span class="doccomment">/// lock for the whole process.  This means that on Windows you may</span>
-    <span class="doccomment">/// open a file, lock it, open it again, and when you try to lock the</span>
-    <span class="doccomment">/// second handle, it will block until the first lock is</span>
-    <span class="doccomment">/// released. Meanwhile, Unix will check whether your process already</span>
-    <span class="doccomment">/// owns the look, see that you already locked the file, and simply</span>
-    <span class="doccomment">/// return as you already have the lock! It will only block if there</span>
-    <span class="doccomment">/// is a _different_ process holding the lock. Also, unlocking one</span>
-    <span class="doccomment">/// file descriptor on unix will unlock the file for the whole</span>
-    <span class="doccomment">/// process.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// For consistent behavior across operating systems, you can</span>
-    <span class="doccomment">/// either make sure that the same file is never locked more than</span>
-    <span class="doccomment">/// once by the same process, or you can use the</span>
-    <span class="doccomment">/// [`LockFile::open_excl()`] call instead (which requires</span>
-    <span class="doccomment">/// `multilock` and `std` on Unix).</span>
+    <span class="doccomment">/// if the path is nul-terminated (ends with 0), no extra allocation will be</span>
+    <span class="doccomment">/// made.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Compatibility</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// The lock files returned by this method can exhibit</span>
-    <span class="doccomment">/// OS-dependent behavior: See &quot;Multiple Handles/Descriptors To</span>
-    <span class="doccomment">/// The Same File&quot; in the documentation for [`LockFile`].</span>
+    <span class="doccomment">/// This crate used to behave differently in regards to Unix and Windows,</span>
+    <span class="doccomment">/// when locks on Unix were per-process and not per-handle. However, the</span>
+    <span class="doccomment">/// current version locks per-handle on any platform. On Unix, however,</span>
+    <span class="doccomment">/// under `fork` file descriptors might be duplicated sharing the same lock,</span>
+    <span class="doccomment">/// but `fork` is usually `unsafe` in Rust.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// Panics if the path contains a nul-byte in a place other than the end.</span>
@@ -1049,7 +460,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/regular.lock&quot;)?;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Ok(())</span>
     <span class="doccomment">/// # }</span>
@@ -1070,23 +481,14 @@
     <span class="kw">where</span>
         <span class="ident">P</span>: <span class="ident">ToOsStr</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
     {
-        <span class="self">Self</span><span class="ident">::open_internal</span>(<span class="ident">path</span>, <span class="ident">Exclusivity::OsDependent</span>)
-    }
-
-    <span class="doccomment">/// Implementation helper for open_excl and open.</span>
-    <span class="kw">fn</span> <span class="ident">open_internal</span><span class="op">&lt;</span><span class="ident">P</span><span class="op">&gt;</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">P</span>, <span class="ident">ex</span>: <span class="ident">Exclusivity</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span>
-    <span class="kw">where</span>
-        <span class="ident">P</span>: <span class="ident">ToOsStr</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span>,
-    {
         <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">path</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">desc</span> <span class="op">=</span> <span class="ident">sys::open</span>(<span class="ident">path</span>.<span class="ident">as_ref</span>())<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="ident">id</span> <span class="op">=</span> <span class="ident">fileid::FileId::get_id</span>(<span class="ident">desc</span>, <span class="ident">ex</span>)<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">locked</span>: <span class="bool-val">false</span>, <span class="ident">id</span>, <span class="ident">desc</span> })
+        <span class="prelude-val">Ok</span>(<span class="self">Self</span> { <span class="ident">locked</span>: <span class="bool-val">false</span>, <span class="ident">desc</span> })
     }
 
     <span class="doccomment">/// Locks this file. Blocks while it is not possible to lock (i.e. someone</span>
-    <span class="doccomment">/// else already owns a lock. After locked, if no attempt to unlock is made,</span>
-    <span class="doccomment">/// it will be automatically unlocked on the file handle drop.</span>
+    <span class="doccomment">/// else already owns a lock). After locked, if no attempt to unlock is</span>
+    <span class="doccomment">/// made, it will be automatically unlocked on the file handle drop.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">/// Panics if this handle already owns the file.</span>
@@ -1097,7 +499,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/target.lock&quot;)?;</span>
     <span class="doccomment">/// file.lock()?;</span>
     <span class="doccomment">/// do_stuff();</span>
     <span class="doccomment">/// file.unlock()?;</span>
@@ -1115,7 +517,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/panicking.lock&quot;)?;</span>
     <span class="doccomment">/// file.lock()?;</span>
     <span class="doccomment">/// file.lock()?;</span>
     <span class="doccomment">///</span>
@@ -1126,14 +528,55 @@
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">locked</span> {
             <span class="macro">panic!</span>(<span class="string">&quot;Cannot lock if already owning a lock&quot;</span>);
         }
-        <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">take_lock</span>();
-        <span class="comment">// We got the fileid lock; now try to lock the file.</span>
-        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="ident">sys::lock</span>(<span class="self">self</span>.<span class="ident">desc</span>) {
-            <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">release_lock</span>();
-            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>);
-        }
+        <span class="ident">sys::lock</span>(<span class="self">self</span>.<span class="ident">desc</span>)<span class="question-mark">?</span>;
         <span class="self">self</span>.<span class="ident">locked</span> <span class="op">=</span> <span class="bool-val">true</span>;
         <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="doccomment">/// Locks this file and writes this process&#39;s PID into the file, which will</span>
+    <span class="doccomment">/// be erased on unlock. Like [`LockFile::lock`], blocks while it is not</span>
+    <span class="doccomment">/// possible to lock. After locked, if no attempt to unlock is made, it will</span>
+    <span class="doccomment">/// be automatically unlocked on the file handle drop.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">/// Panics if this handle already owns the file.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Example</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
+    <span class="doccomment">/// use fslock::LockFile;</span>
+    <span class="doccomment">/// use std::fs::read_to_string;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/withpid.lock&quot;)?;</span>
+    <span class="doccomment">/// file.lock_with_pid()?;</span>
+    <span class="doccomment">/// # #[cfg(feature = &quot;std&quot;)]</span>
+    <span class="doccomment">/// # {</span>
+    <span class="doccomment">/// do_stuff()?;</span>
+    <span class="doccomment">/// # }</span>
+    <span class="doccomment">/// file.unlock()?;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # #[cfg(feature = &quot;std&quot;)]</span>
+    <span class="doccomment">/// fn do_stuff() -&gt; Result&lt;(), fslock::Error&gt; {</span>
+    <span class="doccomment">///     let mut content = read_to_string(&quot;testfiles/withpid.lock&quot;)?;</span>
+    <span class="doccomment">///     assert!(content.trim().len() &gt; 0);</span>
+    <span class="doccomment">///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));</span>
+    <span class="doccomment">///     Ok(())</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Ok(())</span>
+    <span class="doccomment">/// # }</span>
+    <span class="doccomment">/// ```</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lock_with_pid</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">lock</span>() {
+            <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">error</span>);
+        }
+
+        <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="macro">writeln!</span>(<span class="ident">fmt::Writer</span>(<span class="self">self</span>.<span class="ident">desc</span>), <span class="string">&quot;{}&quot;</span>, <span class="ident">sys::pid</span>());
+        <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">is_err</span>() {
+            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">unlock</span>();
+        }
+        <span class="ident">result</span>
     }
 
     <span class="doccomment">/// Locks this file. Does NOT block if it is not possible to lock (i.e.</span>
@@ -1150,7 +593,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/attempt.lock&quot;)?;</span>
     <span class="doccomment">/// if file.try_lock()? {</span>
     <span class="doccomment">///     do_stuff();</span>
     <span class="doccomment">///     file.unlock()?;</span>
@@ -1169,7 +612,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/attempt.lock&quot;)?;</span>
     <span class="doccomment">/// file.lock()?;</span>
     <span class="doccomment">/// file.try_lock()?;</span>
     <span class="doccomment">///</span>
@@ -1180,17 +623,11 @@
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">locked</span> {
             <span class="macro">panic!</span>(<span class="string">&quot;Cannot lock if already owning a lock&quot;</span>);
         }
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">try_take_lock</span>() {
-            <span class="comment">// We got the fileid lock; now try to lock the file.</span>
-            <span class="kw">let</span> <span class="ident">lock_result</span> <span class="op">=</span> <span class="ident">sys::try_lock</span>(<span class="self">self</span>.<span class="ident">desc</span>);
-            <span class="kw">match</span> <span class="ident">lock_result</span> {
-                <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">locked</span> <span class="op">=</span> <span class="bool-val">true</span>,
-                <span class="kw">_</span> <span class="op">=</span><span class="op">&gt;</span> <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">release_lock</span>(),
-            }
-            <span class="ident">lock_result</span>
-        } <span class="kw">else</span> {
-            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+        <span class="kw">let</span> <span class="ident">lock_result</span> <span class="op">=</span> <span class="ident">sys::try_lock</span>(<span class="self">self</span>.<span class="ident">desc</span>);
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) <span class="op">=</span> <span class="ident">lock_result</span> {
+            <span class="self">self</span>.<span class="ident">locked</span> <span class="op">=</span> <span class="bool-val">true</span>;
         }
+        <span class="ident">lock_result</span>
     }
 
     <span class="doccomment">/// Returns whether this file handle owns the lock.</span>
@@ -1200,7 +637,7 @@
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/maybeowned.lock&quot;)?;</span>
     <span class="doccomment">/// do_stuff_with_lock(&amp;mut file);</span>
     <span class="doccomment">/// if !file.owns_lock() {</span>
     <span class="doccomment">///     file.lock()?;</span>
@@ -1233,7 +670,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/endinglock.lock&quot;)?;</span>
     <span class="doccomment">/// file.lock()?;</span>
     <span class="doccomment">/// do_stuff();</span>
     <span class="doccomment">/// file.unlock()?;</span>
@@ -1251,7 +688,7 @@
     <span class="doccomment">/// # fn main() -&gt; Result&lt;(), fslock::Error&gt; {</span>
     <span class="doccomment">/// use fslock::LockFile;</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// let mut file = LockFile::open(&quot;mylock.test&quot;)?;</span>
+    <span class="doccomment">/// let mut file = LockFile::open(&quot;testfiles/endinglock.lock&quot;)?;</span>
     <span class="doccomment">/// file.unlock()?;</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Ok(())</span>
@@ -1263,7 +700,7 @@
         }
         <span class="self">self</span>.<span class="ident">locked</span> <span class="op">=</span> <span class="bool-val">false</span>;
         <span class="ident">sys::unlock</span>(<span class="self">self</span>.<span class="ident">desc</span>)<span class="question-mark">?</span>;
-        <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">release_lock</span>();
+        <span class="ident">sys::truncate</span>(<span class="self">self</span>.<span class="ident">desc</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -1271,9 +708,7 @@
 <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">LockFile</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">locked</span> {
-            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">sys::unlock</span>(<span class="self">self</span>.<span class="ident">desc</span>);
-            <span class="self">self</span>.<span class="ident">id</span>.<span class="ident">release_lock</span>();
-            <span class="self">self</span>.<span class="ident">locked</span> <span class="op">=</span> <span class="bool-val">false</span>;
+            <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">unlock</span>();
         }
         <span class="ident">sys::close</span>(<span class="self">self</span>.<span class="ident">desc</span>);
     }
@@ -1291,39 +726,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">windows</span>)]</span>
 <span class="kw">unsafe</span> <span class="kw">impl</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">LockFile</span> {}
-
-<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
-<span class="kw">mod</span> <span class="ident">test</span> {
-
-    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">all</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>, <span class="ident">any</span>(<span class="ident">not</span>(<span class="ident">unix</span>), <span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;multilock&quot;</span>)))]</span>
-    <span class="attribute">#[<span class="ident">test</span>]</span>
-    <span class="kw">fn</span> <span class="ident">exclusive_lock_cases</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="kw">crate</span><span class="ident">::Error</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f1</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::LockFile::open_excl</span>(<span class="string">&quot;lock2.test&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">f2</span> <span class="op">=</span> <span class="kw">crate</span><span class="ident">::LockFile::open_excl</span>(<span class="string">&quot;lock2.test&quot;</span>)<span class="question-mark">?</span>;
-
-        <span class="comment">// f1 will get the lock; f2 can&#39;t.</span>
-        <span class="macro">assert!</span>(<span class="ident">f1</span>.<span class="ident">try_lock</span>()<span class="question-mark">?</span>);
-        <span class="macro">assert!</span>(<span class="op">!</span><span class="ident">f2</span>.<span class="ident">try_lock</span>()<span class="question-mark">?</span>);
-
-        <span class="comment">// have f2 wait for f1.</span>
-        <span class="kw">let</span> <span class="ident">thr</span> <span class="op">=</span> <span class="ident">std::thread::spawn</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> {
-            <span class="ident">f2</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>();
-            <span class="ident">f2</span>
-        });
-
-        <span class="comment">// Sleep here a little, so that the other thread has time to</span>
-        <span class="comment">// block on the fd-lock.</span>
-        <span class="ident">std::thread::sleep</span>(<span class="ident">std::time::Duration::from_millis</span>(<span class="number">100</span>));
-        <span class="ident">drop</span>(<span class="ident">f1</span>); <span class="comment">// Causes f1 to unlock.</span>
-
-        <span class="kw">let</span> <span class="ident">f2</span> <span class="op">=</span> <span class="ident">thr</span>.<span class="ident">join</span>().<span class="ident">unwrap</span>();
-
-        <span class="macro">assert!</span>(<span class="ident">f2</span>.<span class="ident">owns_lock</span>());
-
-        <span class="prelude-val">Ok</span>(())
-    }
-}
-</pre></div>
+</code></pre></div>
 </section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="fslock" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
     <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
 </body></html>
