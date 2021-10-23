@@ -4,16 +4,6 @@ use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 #[cfg(feature = "std")]
 use std::{ffi, os::unix::ffi::OsStrExt};
 
-extern "C" {
-    /// [Linux man page](https://linux.die.net/man/3/lockf)
-    fn lockf(
-        fd: libc::c_int,
-        cmd: libc::c_int,
-        offset: libc::off_t,
-    ) -> libc::c_int;
-
-}
-
 #[cfg(not(feature = "std"))]
 extern "C" {
     /// Yeah, I had to copy this from std
@@ -58,6 +48,9 @@ fn errno() -> libc::c_int {
 
 /// A type representing file descriptor on Unix.
 pub type FileDesc = libc::c_int;
+
+/// A type representing Process ID on Unix.
+pub type Pid = libc::pid_t;
 
 #[cfg(feature = "std")]
 /// An IO error.
@@ -257,6 +250,11 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
     Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
 }
 
+/// Returns the ID of the current process.
+pub fn pid() -> Pid {
+    unsafe { libc::getpid() }
+}
+
 /// Opens a file with only purpose of locking it. Creates it if it does not
 /// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the
 /// end (and only in the end) is allowed, which in this case no extra allocation
@@ -278,10 +276,45 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     }
 }
 
+/// Writes data into the given open file.
+pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
+    while bytes.len() > 0 {
+        let written = unsafe {
+            libc::write(fd, bytes.as_ptr() as *const libc::c_void, bytes.len())
+        };
+        if written < 0 && errno() != libc::EAGAIN {
+            return Err(Error::last_os_error());
+        }
+        bytes = &bytes[written as usize ..];
+    }
+
+    Ok(())
+}
+
+pub fn fsync(fd: FileDesc) -> Result<(), Error> {
+    let result = unsafe { libc::fsync(fd) };
+
+    if result >= 0 {
+        Ok(())
+    } else {
+        Err(Error::last_os_error())
+    }
+}
+
+/// Truncates the file referenced by the given file descriptor.
+pub fn truncate(fd: FileDesc) -> Result<(), Error> {
+    let res = unsafe { libc::ftruncate(fd, 0) };
+    if res < 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(fd: FileDesc) -> Result<(), Error> {
-    let res = unsafe { lockf(fd, libc::F_LOCK, 0) };
-    if res == 0 {
+    let res = unsafe { libc::flock(fd, libc::LOCK_EX) };
+    if res >= 0 {
         Ok(())
     } else {
         Err(Error::last_os_error())
@@ -290,12 +323,12 @@ pub fn lock(fd: FileDesc) -> Result<(), Error> {
 
 /// Tries to lock a file but returns as soon as possible if already locked.
 pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
-    let res = unsafe { lockf(fd, libc::F_TLOCK, 0) };
-    if res == 0 {
+    let res = unsafe { libc::flock(fd, libc::LOCK_EX | libc::LOCK_NB) };
+    if res >= 0 {
         Ok(true)
     } else {
         let err = errno();
-        if err == libc::EACCES || err == libc::EAGAIN {
+        if err == libc::EWOULDBLOCK || err == libc::EINTR {
             Ok(false)
         } else {
             Err(Error::from_raw_os_error(err as i32))
@@ -305,8 +338,8 @@ pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
 
 /// Unlocks the file.
 pub fn unlock(fd: FileDesc) -> Result<(), Error> {
-    let res = unsafe { lockf(fd, libc::F_ULOCK, 0) };
-    if res == 0 {
+    let res = unsafe { libc::flock(fd, libc::LOCK_UN) };
+    if res >= 0 {
         Ok(())
     } else {
         Err(Error::last_os_error())

@@ -1,6 +1,6 @@
 [package]
 name = "fslock"
-version = "0.1.8"
+version = "0.2.0"
 authors = ["brunoczim <brunoczim@gmail.com>"]
 edition = "2018"
 description = "A library to use files as locks"
@@ -21,10 +21,6 @@ branch = "master"
 version = "^0.2.66"
 default-features = false
 
-[target.'cfg(unix)'.dependencies.once_cell]
-version = "^1.8.0"
-optional = true
-
 [target.'cfg(windows)'.dependencies.winapi]
 version = "^0.3.8"
 features = [
@@ -36,10 +32,10 @@ features = [
     "winnt",
     "synchapi",
     "handleapi",
-    "fileapi"
+    "fileapi",
+    "processthreadsapi"
 ]
 
 [features]
 default = ["std"]
 std = []
-multilock = [ "std", "once_cell" ]

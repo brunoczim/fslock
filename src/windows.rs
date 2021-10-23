@@ -22,12 +22,22 @@ use core::{
 };
 use winapi::{
     shared::{
-        minwindef::{DWORD, FALSE, LPVOID, TRUE},
+        minwindef::{DWORD, FALSE, LPCVOID, LPVOID, TRUE},
         winerror::{ERROR_INVALID_DATA, ERROR_LOCK_VIOLATION},
     },
     um::{
         errhandlingapi::GetLastError,
-        fileapi::{CreateFileW, LockFileEx, UnlockFileEx, CREATE_ALWAYS},
+        fileapi::{
+            CreateFileW,
+            FlushFileBuffers,
+            LockFileEx,
+            SetEndOfFile,
+            SetFilePointer,
+            UnlockFileEx,
+            WriteFile,
+            CREATE_ALWAYS,
+            INVALID_SET_FILE_POINTER,
+        },
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
             OVERLAPPED_u,
@@ -39,8 +49,9 @@ use winapi::{
             OVERLAPPED,
             SECURITY_ATTRIBUTES,
         },
+        processthreadsapi::GetCurrentProcessId,
         synchapi::{CreateEventW, WaitForSingleObject},
-        winbase::{LocalAlloc, LocalFree, WAIT_FAILED},
+        winbase::{LocalAlloc, LocalFree, FILE_BEGIN, WAIT_FAILED},
         winnt::{
             RtlCopyMemory,
             FILE_SHARE_DELETE,
@@ -55,6 +66,9 @@ use winapi::{
 
 /// A type representing file descriptor on Unix.
 pub type FileDesc = HANDLE;
+
+/// A type representing Process ID on Windows.
+pub type Pid = DWORD;
 
 #[cfg(feature = "std")]
 /// An IO error.
@@ -292,8 +306,10 @@ impl<'str> Iterator for Chars<'str> {
     }
 }
 
+/// Helper to auto-drop a HANDLE.
 #[derive(Debug)]
 struct DropHandle {
+    /// HANDLE being dropped.
     handle: HANDLE,
 }
 
@@ -342,13 +358,18 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
             let mut uninit = MaybeUninit::<OVERLAPPED_u>::uninit();
             unsafe {
                 let mut refer = (&mut *uninit.as_mut_ptr()).s_mut();
-                refer.Offset = 0;
-                refer.OffsetHigh = 0;
+                refer.Offset = DWORD::max_value() - 1;
+                refer.OffsetHigh = DWORD::max_value() - 1;
                 uninit.assume_init()
             }
         },
         hEvent: make_event()?,
     })
+}
+
+/// Returns the ID of the current process.
+pub fn pid() -> Pid {
+    unsafe { GetCurrentProcessId() }
 }
 
 /// Opens a file with only purpose of locking it. Creates it if it does not
@@ -376,6 +397,48 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
     }
 }
 
+/// Writes data into the given open file.
+pub fn write(handle: FileDesc, bytes: &[u8]) -> Result<(), Error> {
+    let result = unsafe {
+        WriteFile(
+            handle,
+            bytes.as_ptr() as LPCVOID,
+            bytes.len() as DWORD,
+            ptr::null_mut(),
+            ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+pub fn fsync(handle: FileDesc) -> Result<(), Error> {
+    let result = unsafe { FlushFileBuffers(handle) };
+    if result == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+/// Truncates the file referenced by the given HANDLE.
+pub fn truncate(handle: FileDesc) -> Result<(), Error> {
+    let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
+    if res == INVALID_SET_FILE_POINTER {
+        return Err(Error::last_os_error());
+    }
+
+    let res = unsafe { SetEndOfFile(handle) };
+    if res == 0 {
+        Err(Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 /// Tries to lock a file and blocks until it is possible to lock.
 pub fn lock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
@@ -385,8 +448,8 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK,
             0,
-            DWORD::max_value(),
-            DWORD::max_value(),
+            1,
+            1,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -415,8 +478,8 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
             handle,
             LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
             0,
-            DWORD::max_value(),
-            DWORD::max_value(),
+            1,
+            1,
             &mut overlapped as LPOVERLAPPED,
         )
     };
@@ -446,13 +509,7 @@ pub fn unlock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
     let drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
-        UnlockFileEx(
-            handle,
-            0,
-            DWORD::max_value(),
-            DWORD::max_value(),
-            &mut overlapped as LPOVERLAPPED,
-        )
+        UnlockFileEx(handle, 0, 1, 1, &mut overlapped as LPOVERLAPPED)
     };
 
     let ret = if res == TRUE {
