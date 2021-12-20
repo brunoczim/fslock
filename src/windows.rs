@@ -424,7 +424,7 @@ pub fn fsync(handle: FileDesc) -> Result<(), Error> {
     }
 }
 
-/// Truncates the file referenced by the given HANDLE.
+/// Truncates the file referenced by the given HANDLE and seeks it to the start.
 pub fn truncate(handle: FileDesc) -> Result<(), Error> {
     let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
     if res == INVALID_SET_FILE_POINTER {

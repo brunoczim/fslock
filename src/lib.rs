@@ -249,7 +249,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("testfiles/attempt-panic.lock")?;
+    /// let mut file = LockFile::open("testfiles/attempt_panic.lock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -284,7 +284,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("testfiles/pid-attempt.lock")?;
+    /// let mut file = LockFile::open("testfiles/pid_attempt.lock")?;
     /// if file.try_lock_with_pid()? {
     ///     # #[cfg(feature = "std")]
     ///     # {
@@ -297,7 +297,7 @@ impl LockFile {
     /// # }
     /// # #[cfg(feature = "std")]
     /// fn do_stuff() -> Result<(), fslock::Error> {
-    ///     let mut content = read_to_string("testfiles/pid-attempt.lock")?;
+    ///     let mut content = read_to_string("testfiles/pid_attempt.lock")?;
     ///     assert!(content.trim().len() > 0);
     ///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));
     ///     Ok(())
@@ -310,7 +310,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("testfiles/pid-attempt-panic.lock")?;
+    /// let mut file = LockFile::open("testfiles/pid_attempt_panic.lock")?;
     /// file.lock_with_pid()?;
     /// file.try_lock_with_pid()?;
     ///
@@ -319,12 +319,13 @@ impl LockFile {
     /// ```
     pub fn try_lock_with_pid(&mut self) -> Result<bool, Error> {
         match self.try_lock() {
+            Ok(true) => (),
             Ok(false) => return Ok(false),
             Err(error) => return Err(error),
-            _ => (),
         }
 
-        let result = writeln!(fmt::Writer(self.desc), "{}", sys::pid());
+        let result = sys::truncate(self.desc)
+            .and_then(|_| writeln!(fmt::Writer(self.desc), "{}", sys::pid()));
         if result.is_err() {
             let _ = self.unlock();
         }

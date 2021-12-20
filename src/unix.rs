@@ -301,8 +301,14 @@ pub fn fsync(fd: FileDesc) -> Result<(), Error> {
     }
 }
 
-/// Truncates the file referenced by the given file descriptor.
+/// Truncates the file referenced by the given file descriptor and seeks it to
+/// the start.
 pub fn truncate(fd: FileDesc) -> Result<(), Error> {
+    let res = unsafe { libc::lseek(fd, 0, libc::SEEK_SET) };
+    if res < 0 {
+        return Err(Error::last_os_error());
+    }
+
     let res = unsafe { libc::ftruncate(fd, 0) };
     if res < 0 {
         Err(Error::last_os_error())

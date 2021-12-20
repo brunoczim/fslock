@@ -1,5 +1,7 @@
 # 0.2.1
-* Add `try_lock_with_pid` method.
+* Added `try_lock_with_pid` method.
+* Corrected bug that would not seek lock files on UNIX (when writing PIDs), and
+    so it would fill the previous bytes with nul-bytes.
 
 # 0.2.0
 * Writing PID on locked file via `lock_with_pid()` method.
