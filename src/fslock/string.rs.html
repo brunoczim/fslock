@@ -195,7 +195,7 @@
 };
 
 <span class="kw">impl</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">to_os_str</span>()
             .<span class="ident">and_then</span>(<span class="op">|</span><span class="ident">str</span><span class="op">|</span> <span class="ident">str</span>.<span class="ident">into_os_string</span>())
             .<span class="ident">expect</span>(<span class="string">&quot;Allocation error&quot;</span>)
@@ -203,13 +203,13 @@
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.<span class="ident">as_ref</span>())
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="ident">as_ref</span>())
     }
 }
@@ -217,7 +217,7 @@
 <span class="kw">impl</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">OsString</span> {
     <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">OsStr</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
         <span class="self">self</span>.<span class="ident">as_ref</span>()
     }
 }
@@ -232,10 +232,10 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">OsStr</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">str</span>,
-            <span class="ident"><span class="self">Self</span>::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">string</span>.<span class="ident">as_ref</span>(),
+            <span class="ident"><span class="self">Self</span>::Borrowed</span>(<span class="ident">str</span>) =&gt; <span class="ident">str</span>,
+            <span class="ident"><span class="self">Self</span>::Owned</span>(<span class="ident">string</span>) =&gt; <span class="ident">string</span>.<span class="ident">as_ref</span>(),
         }
     }
 }
@@ -243,7 +243,7 @@
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">Deref</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
     <span class="kw">type</span> <span class="ident">Target</span> <span class="op">=</span> <span class="ident">OsStr</span>;
 
-    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
+    <span class="kw">fn</span> <span class="ident">deref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
         <span class="self">self</span>.<span class="ident">as_ref</span>()
     }
 }
@@ -252,68 +252,68 @@
 <span class="doccomment">/// an error shall be returned.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">IntoOsString</span> {
     <span class="doccomment">/// Converts with possible allocation error.</span>
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
 <span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident"><span class="self">Self</span>::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">str</span>.<span class="ident">into_os_string</span>(),
-            <span class="ident"><span class="self">Self</span>::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="prelude-val">Ok</span>(<span class="ident">string</span>),
+            <span class="ident"><span class="self">Self</span>::Borrowed</span>(<span class="ident">str</span>) =&gt; <span class="ident">str</span>.<span class="ident">into_os_string</span>(),
+            <span class="ident"><span class="self">Self</span>::Owned</span>(<span class="ident">string</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="ident">string</span>),
         }
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">ffi::OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">PathBuf</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">Path</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">AsRef</span>::<span class="op">&lt;</span><span class="ident">ffi::OsStr</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="self">self</span>).<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">ffi::OsString</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         (<span class="kw-2">*</span><span class="self">self</span>).<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">str</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">String</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
     }
 }
@@ -322,49 +322,49 @@
 <span class="doccomment">/// allocation fails, an error shall be returned.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">ToOsStr</span> {
     <span class="doccomment">/// Converts with possible allocation error.</span>
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span>;
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">EitherOsStr</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="kw">match</span> <span class="self">self</span> {
-            <span class="ident">EitherOsStr::Owned</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="ident">EitherOsStr::Owned</span>(<span class="ident">string</span>) =&gt; {
                 <span class="ident">EitherOsStr::Owned</span>(<span class="ident">string</span>.<span class="ident">to_os_str</span>()<span class="question-mark">?</span>.<span class="ident">into_os_string</span>()<span class="question-mark">?</span>)
             },
-            <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>),
+            <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>) =&gt; <span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>),
         })
     }
 }
 
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">EitherOsStr::Borrowed</span>(<span class="self">self</span>))
     }
 }
 
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="ident">EitherOsStr::Borrowed</span>(<span class="self">self</span>.<span class="ident">as_ref</span>()))
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">ffi::OsString</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">PathBuf</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         (<span class="kw-2">*</span><span class="kw-2">*</span><span class="self">self</span>).<span class="ident">to_os_str</span>()
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">Path</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">AsRef</span>::<span class="op">&lt;</span><span class="ident">ffi::OsStr</span><span class="op">&gt;</span><span class="ident">::as_ref</span>(<span class="self">self</span>).<span class="ident">to_os_str</span>()
     }
 }

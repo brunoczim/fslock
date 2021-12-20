@@ -350,6 +350,12 @@
 <span id="350">350</span>
 <span id="351">351</span>
 <span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
 </pre><pre class="rust"><code><span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">EitherOsStr</span>, <span class="ident">IntoOsString</span>, <span class="ident">ToOsStr</span>};
 <span class="kw">use</span> <span class="ident">core</span>::{<span class="ident">fmt</span>, <span class="ident">mem::transmute</span>, <span class="ident">ptr::NonNull</span>, <span class="ident">slice</span>, <span class="ident">str</span>};
 
@@ -385,16 +391,16 @@
         <span class="ident">link_name</span> <span class="op">=</span> <span class="string">&quot;__error&quot;</span>
     )]</span>
     <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">target_os</span> <span class="op">=</span> <span class="string">&quot;haiku&quot;</span>, <span class="ident">link_name</span> <span class="op">=</span> <span class="string">&quot;_errnop&quot;</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">errno_location</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::c_int</span>;
+    <span class="kw">fn</span> <span class="ident">errno_location</span>() -&gt; <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::c_int</span>;
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-<span class="kw">fn</span> <span class="ident">errno</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_int</span> {
+<span class="kw">fn</span> <span class="ident">errno</span>() -&gt; <span class="ident">libc::c_int</span> {
     <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="ident">errno_location</span>() }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-<span class="kw">fn</span> <span class="ident">errno</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">libc::c_int</span> {
+<span class="kw">fn</span> <span class="ident">errno</span>() -&gt; <span class="ident">libc::c_int</span> {
     <span class="ident">Error::last_os_error</span>().<span class="ident">raw_os_error</span>().<span class="ident">unwrap_or</span>(<span class="number">0</span>) <span class="kw">as</span> <span class="ident">libc::c_int</span>
 }
 
@@ -418,24 +424,24 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
 <span class="kw">impl</span> <span class="ident">Error</span> {
     <span class="doccomment">/// Creates an error from a raw OS error code.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_raw_os_error</span>(<span class="ident">code</span>: <span class="ident">i32</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_raw_os_error</span>(<span class="ident">code</span>: <span class="ident">i32</span>) -&gt; <span class="self">Self</span> {
         <span class="self">Self</span> { <span class="ident">code</span> }
     }
 
     <span class="doccomment">/// Creates an error from the last OS error code.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">last_os_error</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Error</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">last_os_error</span>() -&gt; <span class="ident">Error</span> {
         <span class="ident"><span class="self">Self</span>::from_raw_os_error</span>(<span class="ident">errno</span>() <span class="kw">as</span> <span class="ident">i32</span>)
     }
 
     <span class="doccomment">/// Raw OS error code. Returns option for compatibility with std.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_os_error</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">raw_os_error</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">i32</span><span class="op">&gt;</span> {
         <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">code</span>)
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">Error</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">let</span> <span class="ident">msg_ptr</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::strerror</span>(<span class="self">self</span>.<span class="ident">code</span> <span class="kw">as</span> <span class="ident">libc::c_int</span>) };
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::strlen</span>(<span class="ident">msg_ptr</span>) };
         <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">slice::from_raw_parts</span>(<span class="ident">msg_ptr</span>, <span class="ident">len</span>) };
@@ -459,7 +465,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">AsRef</span><span class="op">&lt;</span><span class="ident">OsStr</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">OsString</span> {
-    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
+    <span class="kw">fn</span> <span class="ident">as_ref</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">OsStr</span> {
         <span class="kw">unsafe</span> {
             <span class="ident">OsStr::from_slice</span>(<span class="ident">slice::from_raw_parts</span>(
                 <span class="self">self</span>.<span class="ident">alloc</span>.<span class="ident">as_ptr</span>(),
@@ -477,13 +483,13 @@
 
 <span class="kw">impl</span> <span class="ident">OsStr</span> {
     <span class="doccomment">/// Unsafe cause sequence needs to end with 0.</span>
-    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_slice</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">libc::c_char</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">&amp;</span><span class="self">Self</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_slice</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">libc::c_char</span>]) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span> {
         <span class="ident">transmute</span>(<span class="ident">slice</span>)
     }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Debug</span> <span class="kw">for</span> <span class="ident">OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">first</span> <span class="op">=</span> <span class="bool-val">false</span>;
         <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
 
@@ -507,7 +513,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">fmt::Result</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">fmt</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span>) -&gt; <span class="ident">fmt::Result</span> {
         <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">as_ptr</span>();
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">len</span>();
         <span class="kw">let</span> <span class="ident">slice</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">slice::from_raw_parts</span>(<span class="ident">ptr</span> <span class="kw">as</span> <span class="kw">_</span>, <span class="ident">len</span>) };
@@ -516,11 +522,11 @@
 
         <span class="kw">while</span> <span class="ident">sub</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="kw">match</span> <span class="ident">str::from_utf8</span>(<span class="ident">sub</span>) {
-                <span class="prelude-val">Ok</span>(<span class="ident">string</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Ok</span>(<span class="ident">string</span>) =&gt; {
                     <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{}&quot;</span>, <span class="ident">string</span>)<span class="question-mark">?</span>;
                     <span class="ident">sub</span> <span class="op">=</span> <span class="kw-2">&amp;</span>[];
                 },
-                <span class="prelude-val">Err</span>(<span class="ident">err</span>) <span class="op">=</span><span class="op">&gt;</span> {
+                <span class="prelude-val">Err</span>(<span class="ident">err</span>) =&gt; {
                     <span class="kw">let</span> <span class="ident">string</span> <span class="op">=</span> <span class="ident">str::from_utf8</span>(<span class="kw-2">&amp;</span><span class="ident">sub</span>[.. <span class="ident">err</span>.<span class="ident">valid_up_to</span>()])
                         .<span class="ident">expect</span>(<span class="string">&quot;Inconsistent utf8 error&quot;</span>);
                     <span class="macro">write!</span>(<span class="ident">fmt</span>, <span class="string">&quot;{}�&quot;</span>, <span class="ident">string</span>,)<span class="question-mark">?</span>;
@@ -535,12 +541,12 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;str</span><span class="op">&gt;</span> <span class="ident">IntoOsString</span> <span class="kw">for</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;str</span> <span class="ident">OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">into_os_string</span>(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">OsString</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">len</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">bytes</span>.<span class="ident">len</span>();
         <span class="kw">let</span> <span class="ident">alloc</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::malloc</span>(<span class="ident">len</span> <span class="op">+</span> <span class="number">1</span>) };
         <span class="kw">let</span> <span class="ident">alloc</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">NonNull::new</span>(<span class="ident">alloc</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::c_char</span>) {
-            <span class="prelude-val">Some</span>(<span class="ident">alloc</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">alloc</span>,
-            <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+            <span class="prelude-val">Some</span>(<span class="ident">alloc</span>) =&gt; <span class="ident">alloc</span>,
+            <span class="prelude-val">None</span> =&gt; {
                 <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::last_os_error</span>());
             },
         };
@@ -557,14 +563,14 @@
 }
 
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">str</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">make_os_str</span>(<span class="self">self</span>.<span class="ident">as_bytes</span>())
     }
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">impl</span> <span class="ident">ToOsStr</span> <span class="kw">for</span> <span class="ident">ffi::OsStr</span> {
-    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">to_os_str</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="ident">make_os_str</span>(<span class="self">self</span>.<span class="ident">as_bytes</span>())
     }
 }
@@ -572,12 +578,12 @@
 <span class="doccomment">/// Path must not contain a nul-byte in the middle, but a nul-byte in the end</span>
 <span class="doccomment">/// (and only in the end) is allowed, which in this case no extra allocation</span>
 <span class="doccomment">/// will be made. Otherwise, an extra allocation is made.</span>
-<span class="kw">fn</span> <span class="ident">make_os_str</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">fn</span> <span class="ident">make_os_str</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">EitherOsStr</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span><span class="ident">last</span>, <span class="ident">init</span>)) <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">split_last</span>() {
         <span class="kw">if</span> <span class="ident">init</span>.<span class="ident">contains</span>(<span class="kw-2">&amp;</span><span class="number">0</span>) {
             <span class="macro">panic!</span>(<span class="string">&quot;Path to file cannot contain nul-byte in the middle&quot;</span>);
         }
-        <span class="kw">if</span> <span class="ident">last</span> <span class="op">=</span><span class="op">=</span> <span class="number">0</span> {
+        <span class="kw">if</span> <span class="ident">last</span> <span class="op">==</span> <span class="number">0</span> {
             <span class="kw">let</span> <span class="ident">str</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">OsStr::from_slice</span>(<span class="ident">transmute</span>(<span class="ident">slice</span>)) };
             <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="ident">EitherOsStr::Borrowed</span>(<span class="ident">str</span>));
         }
@@ -585,8 +591,8 @@
 
     <span class="kw">let</span> <span class="ident">alloc</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::malloc</span>(<span class="ident">slice</span>.<span class="ident">len</span>() <span class="op">+</span> <span class="number">1</span>) };
     <span class="kw">let</span> <span class="ident">alloc</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">NonNull::new</span>(<span class="ident">alloc</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">libc::c_char</span>) {
-        <span class="prelude-val">Some</span>(<span class="ident">alloc</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">alloc</span>,
-        <span class="prelude-val">None</span> <span class="op">=</span><span class="op">&gt;</span> {
+        <span class="prelude-val">Some</span>(<span class="ident">alloc</span>) =&gt; <span class="ident">alloc</span>,
+        <span class="prelude-val">None</span> =&gt; {
             <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::last_os_error</span>());
         },
     };
@@ -603,7 +609,7 @@
 }
 
 <span class="doccomment">/// Returns the ID of the current process.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pid</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="ident">Pid</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">pid</span>() -&gt; <span class="ident">Pid</span> {
     <span class="kw">unsafe</span> { <span class="ident">libc::getpid</span>() }
 }
 
@@ -611,7 +617,7 @@
 <span class="doccomment">/// exist. Path must not contain a nul-byte in the middle, but a nul-byte in the</span>
 <span class="doccomment">/// end (and only in the end) is allowed, which in this case no extra allocation</span>
 <span class="doccomment">/// will be made. Otherwise, an extra allocation is made.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">FileDesc</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">open</span>(<span class="ident">path</span>: <span class="kw-2">&amp;</span><span class="ident">OsStr</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">FileDesc</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">fd</span> <span class="op">=</span> <span class="kw">unsafe</span> {
         <span class="ident">libc::open</span>(
             <span class="ident">path</span>.<span class="ident">bytes</span>.<span class="ident">as_ptr</span>(),
@@ -629,7 +635,7 @@
 }
 
 <span class="doccomment">/// Writes data into the given open file.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>, <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">write</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>, <span class="kw-2">mut</span> <span class="ident">bytes</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">while</span> <span class="ident">bytes</span>.<span class="ident">len</span>() <span class="op">&gt;</span> <span class="number">0</span> {
         <span class="kw">let</span> <span class="ident">written</span> <span class="op">=</span> <span class="kw">unsafe</span> {
             <span class="ident">libc::write</span>(<span class="ident">fd</span>, <span class="ident">bytes</span>.<span class="ident">as_ptr</span>() <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">libc::c_void</span>, <span class="ident">bytes</span>.<span class="ident">len</span>())
@@ -643,7 +649,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fsync</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">fsync</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::fsync</span>(<span class="ident">fd</span>) };
 
     <span class="kw">if</span> <span class="ident">result</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
@@ -653,8 +659,14 @@
     }
 }
 
-<span class="doccomment">/// Truncates the file referenced by the given file descriptor.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">truncate</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="doccomment">/// Truncates the file referenced by the given file descriptor and seeks it to</span>
+<span class="doccomment">/// the start.</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">truncate</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+    <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::lseek</span>(<span class="ident">fd</span>, <span class="number">0</span>, <span class="ident">libc::SEEK_SET</span>) };
+    <span class="kw">if</span> <span class="ident">res</span> <span class="op">&lt;</span> <span class="number">0</span> {
+        <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">Error::last_os_error</span>());
+    }
+
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::ftruncate</span>(<span class="ident">fd</span>, <span class="number">0</span>) };
     <span class="kw">if</span> <span class="ident">res</span> <span class="op">&lt;</span> <span class="number">0</span> {
         <span class="prelude-val">Err</span>(<span class="ident">Error::last_os_error</span>())
@@ -664,7 +676,7 @@
 }
 
 <span class="doccomment">/// Tries to lock a file and blocks until it is possible to lock.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span>) };
     <span class="kw">if</span> <span class="ident">res</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
         <span class="prelude-val">Ok</span>(())
@@ -674,13 +686,13 @@
 }
 
 <span class="doccomment">/// Tries to lock a file but returns as soon as possible if already locked.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_lock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">try_lock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_EX</span> <span class="op">|</span> <span class="ident">libc::LOCK_NB</span>) };
     <span class="kw">if</span> <span class="ident">res</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     } <span class="kw">else</span> {
         <span class="kw">let</span> <span class="ident">err</span> <span class="op">=</span> <span class="ident">errno</span>();
-        <span class="kw">if</span> <span class="ident">err</span> <span class="op">=</span><span class="op">=</span> <span class="ident">libc::EWOULDBLOCK</span> <span class="op">|</span><span class="op">|</span> <span class="ident">err</span> <span class="op">=</span><span class="op">=</span> <span class="ident">libc::EINTR</span> {
+        <span class="kw">if</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">libc::EWOULDBLOCK</span> <span class="op">|</span><span class="op">|</span> <span class="ident">err</span> <span class="op">==</span> <span class="ident">libc::EINTR</span> {
             <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
         } <span class="kw">else</span> {
             <span class="prelude-val">Err</span>(<span class="ident">Error::from_raw_os_error</span>(<span class="ident">err</span> <span class="kw">as</span> <span class="ident">i32</span>))
@@ -689,7 +701,7 @@
 }
 
 <span class="doccomment">/// Unlocks the file.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unlock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">unlock</span>(<span class="ident">fd</span>: <span class="ident">FileDesc</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="kw">unsafe</span> { <span class="ident">libc::flock</span>(<span class="ident">fd</span>, <span class="ident">libc::LOCK_UN</span>) };
     <span class="kw">if</span> <span class="ident">res</span> <span class="op">&gt;</span><span class="op">=</span> <span class="number">0</span> {
         <span class="prelude-val">Ok</span>(())
