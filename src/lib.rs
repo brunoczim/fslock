@@ -182,6 +182,7 @@ impl LockFile {
     /// ```
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
+    /// # #[cfg(feature = "std")]
     /// use std::fs::read_to_string;
     ///
     /// let mut file = LockFile::open("testfiles/withpid.lock")?;
@@ -216,7 +217,7 @@ impl LockFile {
     }
 
     /// Locks this file. Does NOT block if it is not possible to lock (i.e.
-    /// someone else already owns a lock. After locked, if no attempt to
+    /// someone else already owns a lock). After locked, if no attempt to
     /// unlock is made, it will be automatically unlocked on the file handle
     /// drop.
     ///
@@ -248,7 +249,7 @@ impl LockFile {
     /// # fn main() -> Result<(), fslock::Error> {
     /// use fslock::LockFile;
     ///
-    /// let mut file = LockFile::open("testfiles/attempt.lock")?;
+    /// let mut file = LockFile::open("testfiles/attempt_panic.lock")?;
     /// file.lock()?;
     /// file.try_lock()?;
     ///
@@ -264,6 +265,71 @@ impl LockFile {
             self.locked = true;
         }
         lock_result
+    }
+
+    /// Locks this file and writes this process's PID into the file, which will
+    /// be erased on unlock. Does NOT block if it is not possible to lock (i.e.
+    /// someone else already owns a lock). After locked, if no attempt to
+    /// unlock is made, it will be automatically unlocked on the file handle
+    /// drop.
+    ///
+    /// # Panics
+    /// Panics if this handle already owns the file.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # #[cfg(feature = "std")]
+    /// # use std::fs::read_to_string;
+    /// # fn main() -> Result<(), fslock::Error> {
+    /// use fslock::LockFile;
+    ///
+    /// let mut file = LockFile::open("testfiles/pid_attempt.lock")?;
+    /// if file.try_lock_with_pid()? {
+    ///     # #[cfg(feature = "std")]
+    ///     # {
+    ///     do_stuff()?;
+    ///     # }
+    ///     file.unlock()?;
+    /// }
+    ///
+    /// # Ok(())
+    /// # }
+    /// # #[cfg(feature = "std")]
+    /// fn do_stuff() -> Result<(), fslock::Error> {
+    ///     let mut content = read_to_string("testfiles/pid_attempt.lock")?;
+    ///     assert!(content.trim().len() > 0);
+    ///     assert!(content.trim().chars().all(|ch| ch.is_ascii_digit()));
+    ///     Ok(())
+    /// }
+    /// ```
+    ///
+    /// # Panicking Example
+    ///
+    /// ```should_panic
+    /// # fn main() -> Result<(), fslock::Error> {
+    /// use fslock::LockFile;
+    ///
+    /// let mut file = LockFile::open("testfiles/pid_attempt_panic.lock")?;
+    /// file.lock_with_pid()?;
+    /// file.try_lock_with_pid()?;
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn try_lock_with_pid(&mut self) -> Result<bool, Error> {
+        match self.try_lock() {
+            Ok(true) => (),
+            Ok(false) => return Ok(false),
+            Err(error) => return Err(error),
+        }
+
+        let result = sys::truncate(self.desc)
+            .and_then(|_| writeln!(fmt::Writer(self.desc), "{}", sys::pid()));
+        if result.is_err() {
+            let _ = self.unlock();
+        }
+        result.map(|_| true)
     }
 
     /// Returns whether this file handle owns the lock.

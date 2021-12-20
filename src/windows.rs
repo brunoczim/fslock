@@ -35,8 +35,8 @@ use winapi::{
             SetFilePointer,
             UnlockFileEx,
             WriteFile,
-            CREATE_ALWAYS,
             INVALID_SET_FILE_POINTER,
+            OPEN_ALWAYS,
         },
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
@@ -384,7 +384,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
             GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             &mut security as LPSECURITY_ATTRIBUTES,
-            CREATE_ALWAYS,
+            OPEN_ALWAYS,
             0,
             ptr::null_mut(),
         )
@@ -424,7 +424,7 @@ pub fn fsync(handle: FileDesc) -> Result<(), Error> {
     }
 }
 
-/// Truncates the file referenced by the given HANDLE.
+/// Truncates the file referenced by the given HANDLE and seeks it to the start.
 pub fn truncate(handle: FileDesc) -> Result<(), Error> {
     let res = unsafe { SetFilePointer(handle, 0, ptr::null_mut(), FILE_BEGIN) };
     if res == INVALID_SET_FILE_POINTER {
