@@ -7,6 +7,7 @@
 # 0.2.0
 * Writing PID on locked file via `lock_with_pid()` method.
 * Unix and Windows locks are now always per-handle.
+    * NOTE: version 0.2.x in UNIX is incompatible with 0.1.x due to this change.
 * Removed multilock feature as it became obsolete.
 
 # 0.1.8
