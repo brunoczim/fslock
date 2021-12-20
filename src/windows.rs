@@ -35,8 +35,8 @@ use winapi::{
             SetFilePointer,
             UnlockFileEx,
             WriteFile,
-            CREATE_ALWAYS,
             INVALID_SET_FILE_POINTER,
+            OPEN_ALWAYS,
         },
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         minwinbase::{
@@ -384,7 +384,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
             GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             &mut security as LPSECURITY_ATTRIBUTES,
-            CREATE_ALWAYS,
+            OPEN_ALWAYS,
             0,
             ptr::null_mut(),
         )
