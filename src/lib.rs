@@ -217,7 +217,7 @@ impl LockFile {
     }
 
     /// Locks this file. Does NOT block if it is not possible to lock (i.e.
-    /// someone else already owns a lock. After locked, if no attempt to
+    /// someone else already owns a lock). After locked, if no attempt to
     /// unlock is made, it will be automatically unlocked on the file handle
     /// drop.
     ///
@@ -269,7 +269,7 @@ impl LockFile {
 
     /// Locks this file and writes this process's PID into the file, which will
     /// be erased on unlock. Does NOT block if it is not possible to lock (i.e.
-    /// someone else already owns a lock. After locked, if no attempt to
+    /// someone else already owns a lock). After locked, if no attempt to
     /// unlock is made, it will be automatically unlocked on the file handle
     /// drop.
     ///
