@@ -1,7 +1,8 @@
 # 0.2.1
 * Added `try_lock_with_pid` method.
-* Corrected bug that would not seek lock files on UNIX (when writing PIDs), and
+* Corrected bug that would not seek lock files in UNIX (when writing PIDs), and
     so it would fill the previous bytes with nul-bytes.
+* Corrected bug that would always truncate files on opening in Windows
 
 # 0.2.0
 * Writing PID on locked file via `lock_with_pid()` method.
