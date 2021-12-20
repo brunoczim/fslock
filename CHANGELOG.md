@@ -1,3 +1,6 @@
+# 0.2.1
+* Add `try_lock_with_pid` method.
+
 # 0.2.0
 * Writing PID on locked file via `lock_with_pid()` method.
 * Unix and Windows locks are now always per-handle.
