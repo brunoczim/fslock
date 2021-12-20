@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+//! **WARNING**: v0.1.x is incompatible with v0.2.x onwards.
+//!
 //! API to use files as a lock. Supports non-std crates by disabling feature
 //! `std`.
 //!
