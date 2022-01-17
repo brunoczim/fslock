@@ -82,11 +82,14 @@ pub struct LockFile {
 // Private functions
 impl LockFile {
     fn new() -> Self {
-        #[allow(unused_unsafe)] // not safe to get state of default truncation setting on no_std
+        #[allow(unused_unsafe)]
+        // not safe to get state of default truncation setting on no_std
         Self {
             desc: sys::uninitialized_fd(),
             locked: false,
-            truncate_on_close: unsafe { constants::default_lockfile_truncate_state() }
+            truncate_on_close: unsafe {
+                constants::default_lockfile_truncate_state()
+            },
         }
     }
 }
@@ -294,7 +297,8 @@ impl LockFile {
     /// unlock is made, it will be automatically unlocked on the file handle
     /// drop.
     ///
-    /// Warning: even if `constants::lockfile_truncate` is false, this still truncates.
+    /// Warning: even if `constants::lockfile_truncate` is false, this still
+    /// truncates.
     ///
     /// # Panics
     /// Panics if this handle already owns the file.
@@ -463,8 +467,9 @@ impl LockFile {
         Ok(())
     }
 
-    /// It is recommended that you use the implementation [`<&mut LockFile as Into<File>>::into`](struct.LockFile.html#impl-Into<File>) instead
-    /// of this low-level function.
+    /// It is recommended that you use the implementation [`<&mut LockFile as
+    /// Into<File>>::into`](struct.LockFile.html#impl-Into<File>) instead of
+    /// this low-level function.
     pub unsafe fn raw(&self) -> FileDesc {
         debug_assert!(self.desc != sys::uninitialized_fd());
         self.desc

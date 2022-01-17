@@ -360,7 +360,6 @@ pub fn close(fd: FileDesc) {
     unsafe { libc::close(fd) };
 }
 
-
 /// An uninitialized file descriptor
 pub(crate) fn uninitialized_fd() -> FileDesc {
     -1
