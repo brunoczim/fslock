@@ -15,7 +15,7 @@ pub(crate) fn default_lockfile_truncate_state() -> bool {
 }
 #[cfg(not(feature = "std"))]
 pub(crate) unsafe fn default_lockfile_truncate_state() -> bool {
-    unsafe { DEFAULT_LOCKFILE_TRUNCATE }
+    *DEFAULT_LOCKFILE_TRUNCATE.borrow()
 }
 
 /// Change the state of default file truncation (default true). On `#[no_std]`,
@@ -26,5 +26,5 @@ pub fn lockfile_truncate(dlft: bool) {
 }
 #[cfg(not(feature = "std"))]
 pub unsafe fn lockfile_truncate(dlft: bool) {
-    unsafe { DEFAULT_LOCKFILE_TRUNCATE = dlft }
+    *DEFAULT_LOCKFILE_TRUNCATE.borrow_mut() = dlft;
 }
