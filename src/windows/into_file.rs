@@ -9,7 +9,7 @@ use crate::LockFile;
 /// ```
 #[doc = include_str!("../../examples/lock_preserved.rs")]
 /// ```
-impl Into<File> for LockFile {
+impl Into<File> for &mut LockFile {
     fn into(self) -> File {
         unsafe { File::from_raw_handle(self.raw() as *mut c_void) }
     }
