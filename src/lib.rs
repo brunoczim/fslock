@@ -36,6 +36,8 @@ mod unix;
 #[cfg(unix)]
 use crate::unix as sys;
 
+mod constants;
+pub use constants::lockfile_truncate;
 mod string;
 mod fmt;
 
@@ -46,7 +48,7 @@ use crate::windows as sys;
 
 pub use crate::{
     string::{EitherOsStr, IntoOsString, ToOsStr},
-    sys::{Error, OsStr, OsString},
+    sys::{Error, FileDesc, OsStr, OsString},
 };
 
 #[derive(Debug)]
@@ -72,10 +74,24 @@ pub use crate::{
 /// # }
 /// ```
 pub struct LockFile {
+    pub truncate_on_close: bool,
     locked: bool,
     desc: sys::FileDesc,
 }
 
+// Private functions
+impl LockFile {
+    fn new() -> Self {
+        #[allow(unused_unsafe)] // not safe to get state of default truncation setting on no_std
+        Self {
+            desc: sys::uninitialized_fd(),
+            locked: false,
+            truncate_on_close: unsafe { constants::default_lockfile_truncate_state() }
+        }
+    }
+}
+
+// Public functions
 impl LockFile {
     /// Opens a file for locking, with OS-dependent locking behavior. On Unix,
     /// if the path is nul-terminated (ends with 0), no extra allocation will be
@@ -121,7 +137,7 @@ impl LockFile {
     {
         let path = path.to_os_str()?;
         let desc = sys::open(path.as_ref())?;
-        Ok(Self { locked: false, desc })
+        Ok(Self { desc, ..Self::new() })
     }
 
     /// Locks this file. Blocks while it is not possible to lock (i.e. someone
@@ -163,6 +179,7 @@ impl LockFile {
     /// # }
     /// ```
     pub fn lock(&mut self) -> Result<(), Error> {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
@@ -207,6 +224,7 @@ impl LockFile {
     /// # }
     /// ```
     pub fn lock_with_pid(&mut self) -> Result<(), Error> {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         if let Err(error) = self.lock() {
             return Err(error);
         }
@@ -259,6 +277,7 @@ impl LockFile {
     /// # }
     /// ```
     pub fn try_lock(&mut self) -> Result<bool, Error> {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
@@ -274,6 +293,8 @@ impl LockFile {
     /// someone else already owns a lock). After locked, if no attempt to
     /// unlock is made, it will be automatically unlocked on the file handle
     /// drop.
+    ///
+    /// Warning: even if `constants::lockfile_truncate` is false, this still truncates.
     ///
     /// # Panics
     /// Panics if this handle already owns the file.
@@ -319,7 +340,37 @@ impl LockFile {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Preserved Example
+    ///
+    /// ```
+    /// # fn main() -> Result<(), fslock::Error> {
+    /// use fslock::LockFile;
+    /// fslock::lockfile_truncate(false); // turn off truncation
+    /// {
+    ///     let mut file = LockFile::open("testfiles/pid_preserved.lock")?;
+    ///     file.try_lock_with_pid()?;
+    /// }
+    /// # #[cfg(not(feature = "std"))]
+    /// # return Ok(());
+    /// # #[cfg(feature = "std")]
+    /// # fn inner() -> Result<(), fslock::Error> {
+    /// # use std::fs::File;
+    /// # use std::io::Read as _;
+    /// let mut s = String::new();
+    /// {
+    ///     File::open("testfiles/pid_preserved.lock").unwrap().read_to_string(&mut s)?;
+    /// }
+    /// assert_eq!(s.as_str().trim().parse::<u32>().map_err(|_|std::io::Error::new(std::io::ErrorKind::InvalidData, "😦"))?, std::process::id());
+    /// # Ok(())
+    /// # }
+    /// # #[cfg(not(feature = "std"))]
+    /// # fn inner() -> Result<(), fslock::Error> {Ok(())}
+    /// # inner()
+    /// # }
+    /// ```
     pub fn try_lock_with_pid(&mut self) -> Result<bool, Error> {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         match self.try_lock() {
             Ok(true) => (),
             Ok(false) => return Ok(false),
@@ -359,6 +410,7 @@ impl LockFile {
     /// # }
     /// ```
     pub fn owns_lock(&self) -> bool {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         self.locked
     }
 
@@ -399,13 +451,23 @@ impl LockFile {
     /// # }
     /// ```
     pub fn unlock(&mut self) -> Result<(), Error> {
+        debug_assert!(self.desc != sys::uninitialized_fd());
         if !self.locked {
             panic!("Attempted to unlock already locked lockfile");
         }
         self.locked = false;
         sys::unlock(self.desc)?;
-        sys::truncate(self.desc)?;
+        if self.truncate_on_close {
+            sys::truncate(self.desc)?;
+        }
         Ok(())
+    }
+
+    /// It is recommended that you use the implementation [`<&mut LockFile as Into<File>>::into`](struct.LockFile.html#impl-Into<File>) instead
+    /// of this low-level function.
+    pub unsafe fn raw(&self) -> FileDesc {
+        debug_assert!(self.desc != sys::uninitialized_fd());
+        self.desc
     }
 }
 

@@ -1,3 +1,6 @@
+#[cfg(feature = "std")]
+mod into_file;
+
 #[cfg(not(feature = "std"))]
 use winapi::um::{
     winbase::{
@@ -532,4 +535,8 @@ pub fn close(handle: FileDesc) {
     unsafe {
         CloseHandle(handle);
     }
+}
+
+pub(crate) fn uninitialized_fd() -> FileDesc {
+    ptr::null_mut()
 }

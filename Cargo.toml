@@ -2,6 +2,7 @@
 name = "fslock"
 version = "0.2.1"
 edition = "2018"
+version = "0.2.2"
 description = "A library to use files as locks"
 repository = "https://github.com/brunoczim/fslock"
 readme = "README.md"

@@ -1,3 +1,6 @@
+#[cfg(feature = "std")]
+mod into_file;
+
 use crate::{EitherOsStr, IntoOsString, ToOsStr};
 use core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 
@@ -355,4 +358,10 @@ pub fn unlock(fd: FileDesc) -> Result<(), Error> {
 /// Closes the file.
 pub fn close(fd: FileDesc) {
     unsafe { libc::close(fd) };
+}
+
+
+/// An uninitialized file descriptor
+pub(crate) fn uninitialized_fd() -> FileDesc {
+    -1
 }
