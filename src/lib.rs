@@ -400,7 +400,7 @@ impl LockFile {
     /// ```
     pub fn unlock(&mut self) -> Result<(), Error> {
         if !self.locked {
-            panic!("Attempted to unlock already locked lockfile");
+            panic!("Attempted to unlock already unlocked lockfile");
         }
         self.locked = false;
         sys::unlock(self.desc)?;
