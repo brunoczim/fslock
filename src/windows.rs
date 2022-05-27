@@ -143,6 +143,8 @@ pub struct OsString {
     len: usize,
 }
 
+unsafe impl Send for OsString {}
+
 impl Drop for OsString {
     fn drop(&mut self) {
         let ptr = self.alloc.as_ptr() as LPVOID;
