@@ -430,3 +430,52 @@ unsafe impl Send for LockFile {}
 
 #[cfg(windows)]
 unsafe impl Sync for LockFile {}
+
+#[cfg(all(unix, feature = "std"))]
+mod as_fd {
+    use crate::LockFile;
+    use std::os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd};
+    impl AsRawFd for LockFile {
+        fn as_raw_fd(&self) -> RawFd {
+            self.desc
+        }
+    }
+    impl AsFd for LockFile {
+        fn as_fd(&self) -> BorrowedFd<'_> {
+            // SAFETY: We will not close the file descriptor until
+            // self is dropped.
+            unsafe { BorrowedFd::borrow_raw(self.as_raw_fd()) }
+        }
+    }
+}
+
+#[cfg(all(windows, feature = "std"))]
+mod as_handle {
+    use crate::LockFile;
+    use std::os::windows::io::{
+        AsHandle,
+        AsRawHandle,
+        BorrowedHandle,
+        RawHandle,
+    };
+    impl AsRawHandle for LockFile {
+        fn as_raw_handle(&self) -> RawHandle {
+            // "desc" is a `HANDLE`, which is a a type alias for
+            // *mut winapi::cytpes::c_void
+            //
+            // We want to convert into a RawHandle, which is a type alias for
+            // *mut std::os::raw::c_void
+            //
+            // Since these are both c_voids, and both are handled by the
+            // underlying OS, this pointer cast is okay.
+            self.desc as RawHandle
+        }
+    }
+    impl AsHandle for LockFile {
+        fn as_handle(&self) -> BorrowedHandle<'_> {
+            // SAFETY: We will not close the handle until
+            // self is dropped.
+            unsafe { BorrowedHandle::borrow_raw(self.as_raw_handle()) }
+        }
+    }
+}

@@ -177,3 +177,48 @@ fn other_process_but_curr_reads() -> Result<(), Error> {
     check_try_lock_example(path, b"SUCCESS\n")?;
     Ok(())
 }
+
+#[cfg(all(unix, feature = "std"))]
+#[test]
+fn as_fd() -> Result<(), Error> {
+    use std::os::{
+        fd::{AsFd, AsRawFd},
+        unix::fs::MetadataExt,
+    };
+
+    let path = "testfiles/as_fd.lock";
+
+    let file = LockFile::open(path)?;
+
+    assert_eq!(file.as_fd().as_raw_fd(), file.as_raw_fd());
+
+    let f: std::fs::File = file.as_fd().try_clone_to_owned()?.into();
+    assert_eq!(f.metadata()?.ino(), std::fs::metadata(path)?.ino());
+
+    Ok(())
+}
+
+#[cfg(all(windows, feature = "std"))]
+#[test]
+fn as_handle() -> Result<(), Error> {
+    use std::os::windows::{
+        fs::MetadataExt,
+        io::{AsHandle, AsRawHandle},
+    };
+
+    let path = "testfiles/as_handle.lock";
+
+    let file = LockFile::open(path)?;
+
+    assert_eq!(file.as_handle().as_raw_handle(), file.as_raw_handle());
+
+    let f: std::fs::File = file.as_handle().try_clone_to_owned()?.into();
+    // TODO: We'd like to look at file_index(), but that function is
+    // nightly-only.
+    assert_eq!(
+        f.metadata()?.creation_time(),
+        std::fs::metadata(path)?.creation_time()
+    );
+
+    Ok(())
+}
