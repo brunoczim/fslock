@@ -27,7 +27,7 @@ fn try_read_pid() -> Result<(), Error> {
 
     let path = "testfiles/try_read_pid.lock";
     let mut file = LockFile::open(path)?;
-    assert!(file.try_lock_with_pid()?);
+    file.try_lock_with_pid()?;
 
     let content_a = read_to_string(path)?;
     let content_b = read_to_string(path)?;
@@ -123,7 +123,7 @@ fn other_process_pid() -> Result<(), Error> {
 
     let path = "testfiles/other_process_pid.lock";
     let mut file = LockFile::open(path)?;
-    assert!(file.try_lock_with_pid()?);
+    file.try_lock_with_pid()?;
 
     let content = read_to_string(path)?;
     assert!(content.trim().len() > 0);
@@ -139,7 +139,7 @@ fn other_process_pid() -> Result<(), Error> {
     let child_content = read_to_string(path)?;
     assert!(child_content.trim().len() == 0);
 
-    assert!(file.try_lock_with_pid()?);
+    file.try_lock_with_pid()?;
 
     let content_again = read_to_string(path)?;
     assert_eq!(content_again, content);

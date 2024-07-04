@@ -18,11 +18,8 @@ fn main() -> Result<(), fslock::Error> {
 
     let mut lockfile = LockFile::open(&path)?;
 
-    if lockfile.try_lock()? {
-        println!("SUCCESS");
-    } else {
-        println!("FAILURE");
-    }
+    lockfile.try_lock()?;
+    println!("SUCCESS");
 
     Ok(())
 }

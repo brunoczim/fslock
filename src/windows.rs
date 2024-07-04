@@ -472,7 +472,7 @@ pub fn lock(handle: FileDesc) -> Result<(), Error> {
 }
 
 /// Tries to lock a file but returns as soon as possible if already locked.
-pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
+pub fn try_lock(handle: FileDesc) -> Result<(), Error> {
     let mut overlapped = make_overlapped()?;
     let drop_handle = DropHandle { handle: overlapped.hEvent };
     let res = unsafe {
@@ -489,17 +489,13 @@ pub fn try_lock(handle: FileDesc) -> Result<bool, Error> {
     let ret = if res == TRUE {
         let res = unsafe { WaitForSingleObject(overlapped.hEvent, 0) };
         if res != WAIT_FAILED {
-            Ok(true)
+            Ok(())
         } else {
             Err(Error::last_os_error())
         }
     } else {
         let err = unsafe { GetLastError() };
-        if err == ERROR_LOCK_VIOLATION {
-            Ok(false)
-        } else {
-            Err(Error::from_raw_os_error(err as i32))
-        }
+        Err(Error::from_raw_os_error(err as i32))
     };
 
     drop(drop_handle);
