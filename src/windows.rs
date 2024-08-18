@@ -53,7 +53,6 @@ use winapi::{
         synchapi::{CreateEventW, WaitForSingleObject},
         winbase::{LocalAlloc, LocalFree, FILE_BEGIN, WAIT_FAILED},
         winnt::{
-            RtlCopyMemory,
             FILE_SHARE_DELETE,
             FILE_SHARE_READ,
             FILE_SHARE_WRITE,
@@ -139,7 +138,7 @@ impl fmt::Display for Error {
 /// Owned allocation of an OS-native string.
 pub struct OsString {
     alloc: NonNull<WCHAR>,
-    /// Length without the nul-byte.
+    /// Length _with_ the nul-byte.
     len: usize,
 }
 
@@ -176,8 +175,10 @@ impl OsStr {
         transmute(slice)
     }
 
-    fn chars(&self) -> Chars {
-        Chars { inner: self.chars.iter() }
+    /// Chars iterator w/o the null char
+    fn chars_wo_null(&self) -> Chars {
+        let (_null, chars) = self.chars.split_last().unwrap();
+        Chars { inner: chars.iter() }
     }
 }
 
@@ -186,7 +187,7 @@ impl fmt::Debug for OsStr {
         let mut first = false;
         write!(fmt, "[")?;
 
-        for ch in self.chars() {
+        for ch in self.chars_wo_null() {
             if first {
                 first = false;
             } else {
@@ -202,7 +203,7 @@ impl fmt::Debug for OsStr {
 
 impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        for ch in self.chars() {
+        for ch in self.chars_wo_null() {
             write!(fmt, "{}", ch)?;
         }
 
@@ -213,7 +214,7 @@ impl fmt::Display for OsStr {
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = self.chars.len();
-        let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2 + 2) };
+        let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2) };
         let alloc = match NonNull::new(alloc as *mut WCHAR) {
             Some(alloc) => alloc,
             None => {
@@ -221,10 +222,10 @@ impl<'str> IntoOsString for &'str OsStr {
             },
         };
         unsafe {
-            RtlCopyMemory(
-                alloc.as_ptr() as LPVOID,
-                self.chars.as_ptr() as _,
-                len * 2 + 2,
+            core::ptr::copy_nonoverlapping(
+                self.chars.as_ptr(),
+                alloc.as_ptr(),
+                len * 2,
             );
         }
 

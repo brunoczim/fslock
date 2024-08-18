@@ -95,7 +95,7 @@ impl fmt::Display for Error {
 /// Owned allocation of an OS-native string.
 pub struct OsString {
     alloc: NonNull<libc::c_char>,
-    /// Length without the nul-byte.
+    /// Length _with_ the nul-byte.
     len: usize,
 }
 
@@ -130,6 +130,15 @@ impl OsStr {
     unsafe fn from_slice(slice: &[libc::c_char]) -> &Self {
         transmute(slice)
     }
+
+    fn bytes_wo_null(&self) -> &[u8] {
+        unsafe {
+            slice::from_raw_parts(
+                self.bytes.as_ptr().cast(),
+                self.bytes.len() - 1,
+            )
+        }
+    }
 }
 
 impl fmt::Debug for OsStr {
@@ -137,8 +146,7 @@ impl fmt::Debug for OsStr {
         let mut first = false;
         write!(fmt, "[")?;
 
-        for &signed in &self.bytes {
-            let byte = signed as u8;
+        for &byte in self.bytes_wo_null() {
             if first {
                 first = false;
             } else {
@@ -158,11 +166,7 @@ impl fmt::Debug for OsStr {
 
 impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        let ptr = self.bytes.as_ptr();
-        let len = self.bytes.len();
-        let slice = unsafe { slice::from_raw_parts(ptr as _, len) };
-
-        let mut sub = slice;
+        let mut sub = self.bytes_wo_null();
 
         while sub.len() > 0 {
             match str::from_utf8(sub) {
@@ -173,7 +177,7 @@ impl fmt::Display for OsStr {
                 Err(err) => {
                     let string = str::from_utf8(&sub[.. err.valid_up_to()])
                         .expect("Inconsistent utf8 error");
-                    write!(fmt, "{}�", string,)?;
+                    write!(fmt, "{}{}", string, char::REPLACEMENT_CHARACTER)?;
 
                     sub = &sub[err.valid_up_to() + 1 ..];
                 },
@@ -187,7 +191,7 @@ impl fmt::Display for OsStr {
 impl<'str> IntoOsString for &'str OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = self.bytes.len();
-        let alloc = unsafe { libc::malloc(len + 1) };
+        let alloc = unsafe { libc::malloc(len) };
         let alloc = match NonNull::new(alloc as *mut libc::c_char) {
             Some(alloc) => alloc,
             None => {
@@ -195,10 +199,10 @@ impl<'str> IntoOsString for &'str OsStr {
             },
         };
         unsafe {
-            libc::memcpy(
-                alloc.as_ptr() as *mut libc::c_void,
-                self.bytes.as_ptr() as *const libc::c_void,
-                len + 1,
+            core::ptr::copy_nonoverlapping(
+                self.bytes.as_ptr().cast(),
+                alloc.as_ptr(),
+                len,
             );
         }
 
@@ -228,7 +232,8 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
             panic!("Path to file cannot contain nul-byte in the middle");
         }
         if last == 0 {
-            let str = unsafe { OsStr::from_slice(transmute(slice)) };
+            let str =
+                unsafe { OsStr::from_slice(transmute::<&[u8], &[i8]>(slice)) };
             return Ok(EitherOsStr::Borrowed(str));
         }
     }
@@ -241,15 +246,15 @@ fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
         },
     };
     unsafe {
-        libc::memcpy(
-            alloc.as_ptr() as *mut libc::c_void,
-            slice.as_ptr() as *const libc::c_void,
+        core::ptr::copy_nonoverlapping(
+            slice.as_ptr(),
+            alloc.as_ptr().cast(),
             slice.len(),
         );
         *alloc.as_ptr().add(slice.len()) = 0;
     }
 
-    Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() }))
+    Ok(EitherOsStr::Owned(OsString { alloc, len: slice.len() + 1 }))
 }
 
 /// Returns the ID of the current process.

@@ -163,3 +163,20 @@ jobs:
         with:
           command: test
           args: --no-default-features
+
+  miri:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        # Miri requires nightly Rust
+        toolchain: nightly
+        override: true
+        components: miri
+    - name: Run Miri
+      run: cargo miri test
+      env:
+        MIRIFLAGS: -Zmiri-disable-isolation
