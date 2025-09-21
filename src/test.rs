@@ -106,6 +106,7 @@ fn check_try_lock_with_pid_example(
 
 #[cfg(feature = "std")]
 #[test]
+#[cfg_attr(miri, ignore)]
 fn other_process() -> Result<(), Error> {
     let path = "testfiles/other_process.lock";
     let mut file = LockFile::open(path)?;
@@ -118,6 +119,7 @@ fn other_process() -> Result<(), Error> {
 
 #[cfg(feature = "std")]
 #[test]
+#[cfg_attr(miri, ignore)]
 fn other_process_pid() -> Result<(), Error> {
     use std::fs::read_to_string;
 
@@ -162,6 +164,7 @@ fn other_process_pid() -> Result<(), Error> {
 
 #[cfg(feature = "std")]
 #[test]
+#[cfg_attr(miri, ignore)]
 fn other_process_but_curr_reads() -> Result<(), Error> {
     use std::fs::read_to_string;
 
