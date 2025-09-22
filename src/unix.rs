@@ -168,7 +168,7 @@ impl fmt::Display for OsStr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         let mut sub = self.bytes_wo_null();
 
-        while sub.len() > 0 {
+        while !sub.is_empty() {
             match str::from_utf8(sub) {
                 Ok(string) => {
                     write!(fmt, "{}", string)?;
@@ -188,7 +188,7 @@ impl fmt::Display for OsStr {
     }
 }
 
-impl<'str> IntoOsString for &'str OsStr {
+impl IntoOsString for &OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = self.bytes.len();
         let alloc = unsafe { libc::malloc(len) };
@@ -211,14 +211,14 @@ impl<'str> IntoOsString for &'str OsStr {
 }
 
 impl ToOsStr for str {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+    fn to_os_str(&'_ self) -> Result<EitherOsStr<'_>, Error> {
         make_os_str(self.as_bytes())
     }
 }
 
 #[cfg(feature = "std")]
 impl ToOsStr for ffi::OsStr {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+    fn to_os_str(&'_ self) -> Result<EitherOsStr<'_>, Error> {
         make_os_str(self.as_bytes())
     }
 }
@@ -226,7 +226,7 @@ impl ToOsStr for ffi::OsStr {
 /// Path must not contain a nul-byte in the middle, but a nul-byte in the end
 /// (and only in the end) is allowed, which in this case no extra allocation
 /// will be made. Otherwise, an extra allocation is made.
-fn make_os_str(slice: &[u8]) -> Result<EitherOsStr, Error> {
+fn make_os_str<'a>(slice: &'a [u8]) -> Result<EitherOsStr<'a>, Error> {
     if let Some((&last, init)) = slice.split_last() {
         if init.contains(&0) {
             panic!("Path to file cannot contain nul-byte in the middle");
@@ -285,7 +285,7 @@ pub fn open(path: &OsStr) -> Result<FileDesc, Error> {
 
 /// Writes data into the given open file.
 pub fn write(fd: FileDesc, mut bytes: &[u8]) -> Result<(), Error> {
-    while bytes.len() > 0 {
+    while !bytes.is_empty() {
         let written = unsafe {
             libc::write(fd, bytes.as_ptr() as *const libc::c_void, bytes.len())
         };

@@ -12,23 +12,28 @@ jobs:
       RUST_BACKTRACE: 1
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Get Rust toolchain version
+        id: get-version
+        shell: bash
+        run: |
+          version=$(cat rust-toolchain.toml | sed -n 's/channel = "\(.*\)"/\1/p')
+          echo "v=$version" >> "$GITHUB_OUTPUT"
+          echo "Using Rust version $version"
 
       - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
+        shell: bash
+        run: |
+          rustup update ${{ steps.get-version.outputs.v }} \
+            && rustup default ${{ steps.get-version.outputs.v }}
 
       - name: Run cargo doc
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --all-features
+        shell: bash
+        run: cargo doc --all-features
 
       - name: Deploy Docs
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./target/doc

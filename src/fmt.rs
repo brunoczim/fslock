@@ -68,7 +68,7 @@ impl Write for Adapter {
     fn write_str(&mut self, data: &str) -> fmt::Result {
         let mut bytes = data.as_bytes();
 
-        while bytes.len() > 0 && self.result.is_ok() {
+        while !bytes.is_empty() && self.result.is_ok() {
             let start = self.cursor;
             let size = (BUF_SIZE - self.cursor).min(bytes.len());
             let end = start + size;
@@ -77,7 +77,7 @@ impl Write for Adapter {
             self.cursor = end;
             bytes = &bytes[size ..];
 
-            if bytes.len() > 0 {
+            if !bytes.is_empty() {
                 self.result = self.flush();
             }
         }
