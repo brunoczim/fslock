@@ -231,10 +231,10 @@ impl LockFile {
     /// use fslock::LockFile;
     ///
     /// let mut file = LockFile::open("testfiles/attempt.lock")?;
-    /// if file.try_lock()? {
-    ///     do_stuff();
-    ///     file.unlock()?;
-    /// }
+    /// file.try_lock()?;
+    /// do_stuff();
+    /// file.unlock()?;
+    ///
     ///
     /// # Ok(())
     /// # }
@@ -256,15 +256,11 @@ impl LockFile {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn try_lock(&mut self) -> Result<bool, Error> {
+    pub fn try_lock(&mut self) -> Result<(), Error> {
         if self.locked {
             panic!("Cannot lock if already owning a lock");
         }
-        let lock_result = sys::try_lock(self.desc);
-        if let Ok(true) = lock_result {
-            self.locked = true;
-        }
-        lock_result
+        sys::try_lock(self.desc)
     }
 
     /// Locks this file and writes this process's PID into the file, which will
@@ -317,19 +313,15 @@ impl LockFile {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn try_lock_with_pid(&mut self) -> Result<bool, Error> {
-        match self.try_lock() {
-            Ok(true) => (),
-            Ok(false) => return Ok(false),
-            Err(error) => return Err(error),
-        }
+    pub fn try_lock_with_pid(&mut self) -> Result<(), Error> {
+        self.try_lock()?;
 
         let result = sys::truncate(self.desc)
             .and_then(|_| writeln!(fmt::Writer(self.desc), "{}", sys::pid()));
         if result.is_err() {
             let _ = self.unlock();
         }
-        result.map(|_| true)
+        result.map(|_| ())
     }
 
     /// Returns whether this file handle owns the lock.

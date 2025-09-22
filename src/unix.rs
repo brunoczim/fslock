@@ -335,17 +335,13 @@ pub fn lock(fd: FileDesc) -> Result<(), Error> {
 }
 
 /// Tries to lock a file but returns as soon as possible if already locked.
-pub fn try_lock(fd: FileDesc) -> Result<bool, Error> {
+pub fn try_lock(fd: FileDesc) -> Result<(), Error> {
     let res = unsafe { libc::flock(fd, libc::LOCK_EX | libc::LOCK_NB) };
     if res >= 0 {
-        Ok(true)
+        Ok(())
     } else {
         let err = errno();
-        if err == libc::EWOULDBLOCK || err == libc::EINTR {
-            Ok(false)
-        } else {
-            Err(Error::from_raw_os_error(err as i32))
-        }
+        Err(Error::from_raw_os_error(err as i32))
     }
 }
 
