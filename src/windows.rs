@@ -176,7 +176,7 @@ impl OsStr {
     }
 
     /// Chars iterator w/o the null char
-    fn chars_wo_null(&self) -> Chars {
+    fn chars_wo_null<'a>(&'a self) -> Chars<'a> {
         let (_null, chars) = self.chars.split_last().unwrap();
         Chars { inner: chars.iter() }
     }
@@ -211,7 +211,7 @@ impl fmt::Display for OsStr {
     }
 }
 
-impl<'str> IntoOsString for &'str OsStr {
+impl IntoOsString for &OsStr {
     fn into_os_string(self) -> Result<OsString, Error> {
         let len = self.chars.len();
         let alloc = unsafe { LocalAlloc(LMEM_FIXED, len * 2) };
@@ -234,7 +234,7 @@ impl<'str> IntoOsString for &'str OsStr {
 }
 
 impl ToOsStr for str {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+    fn to_os_str(&'_ self) -> Result<EitherOsStr<'_>, Error> {
         let res = unsafe { make_os_string(|| self.encode_utf16()) };
         res.map(EitherOsStr::Owned)
     }
@@ -242,7 +242,7 @@ impl ToOsStr for str {
 
 #[cfg(feature = "std")]
 impl ToOsStr for ffi::OsStr {
-    fn to_os_str(&self) -> Result<EitherOsStr, Error> {
+    fn to_os_str(&'_ self) -> Result<EitherOsStr<'_>, Error> {
         let res = unsafe { make_os_string(|| self.encode_wide()) };
         res.map(EitherOsStr::Owned)
     }
@@ -289,7 +289,7 @@ struct Chars<'str> {
     inner: slice::Iter<'str, WCHAR>,
 }
 
-impl<'str> Iterator for Chars<'str> {
+impl Iterator for Chars<'_> {
     type Item = char;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -360,9 +360,9 @@ fn make_overlapped() -> Result<OVERLAPPED, Error> {
         u: {
             let mut uninit = MaybeUninit::<OVERLAPPED_u>::uninit();
             unsafe {
-                let mut refer = (&mut *uninit.as_mut_ptr()).s_mut();
-                refer.Offset = DWORD::max_value() - 1;
-                refer.OffsetHigh = DWORD::max_value() - 1;
+                let refer = (&mut *uninit.as_mut_ptr()).s_mut();
+                refer.Offset = DWORD::MAX - 1;
+                refer.OffsetHigh = DWORD::MAX - 1;
                 uninit.assume_init()
             }
         },

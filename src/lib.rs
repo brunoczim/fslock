@@ -207,9 +207,7 @@ impl LockFile {
     /// # }
     /// ```
     pub fn lock_with_pid(&mut self) -> Result<(), Error> {
-        if let Err(error) = self.lock() {
-            return Err(error);
-        }
+        self.lock()?;
 
         let result = writeln!(fmt::Writer(self.desc), "{}", sys::pid());
         if result.is_err() {
