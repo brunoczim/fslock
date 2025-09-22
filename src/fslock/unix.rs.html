@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/unix.rs`."><title>unix.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-aa0817cf.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="fslock" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0 (1159e78c4 2025-09-14)" data-channel="1.90.0" data-search-js="search-fa3e91e5.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-68b7e25d.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-eebb9057.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">fslock/</div>unix.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use crate</span>::{EitherOsStr, IntoOsString, ToOsStr};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/unix.rs`."><title>unix.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-e56847b5.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="fslock" data-themes="" data-resource-suffix="" data-rustdoc-version="1.92.0-nightly (a454fccb0 2025-09-15)" data-channel="nightly" data-search-js="search-cb266a1a.js" data-stringdex-js="stringdex-5af928a3.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-6dc2a7f3.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">fslock/</div>unix.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use crate</span>::{EitherOsStr, IntoOsString, ToOsStr};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>core::{fmt, mem::transmute, ptr::NonNull, slice, str};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
@@ -168,7 +168,7 @@
 <a href=#168 id=168 data-nosnippet>168</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, fmt: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
 <a href=#169 id=169 data-nosnippet>169</a>        <span class="kw">let </span><span class="kw-2">mut </span>sub = <span class="self">self</span>.bytes_wo_null();
 <a href=#170 id=170 data-nosnippet>170</a>
-<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">while </span>sub.len() &gt; <span class="number">0 </span>{
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">while </span>!sub.is_empty() {
 <a href=#172 id=172 data-nosnippet>172</a>            <span class="kw">match </span>str::from_utf8(sub) {
 <a href=#173 id=173 data-nosnippet>173</a>                <span class="prelude-val">Ok</span>(string) =&gt; {
 <a href=#174 id=174 data-nosnippet>174</a>                    <span class="macro">write!</span>(fmt, <span class="string">"{}"</span>, string)<span class="question-mark">?</span>;
@@ -188,7 +188,7 @@
 <a href=#188 id=188 data-nosnippet>188</a>    }
 <a href=#189 id=189 data-nosnippet>189</a>}
 <a href=#190 id=190 data-nosnippet>190</a>
-<a href=#191 id=191 data-nosnippet>191</a><span class="kw">impl</span>&lt;<span class="lifetime">'str</span>&gt; IntoOsString <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'str </span>OsStr {
+<a href=#191 id=191 data-nosnippet>191</a><span class="kw">impl </span>IntoOsString <span class="kw">for </span><span class="kw-2">&amp;</span>OsStr {
 <a href=#192 id=192 data-nosnippet>192</a>    <span class="kw">fn </span>into_os_string(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;OsString, Error&gt; {
 <a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>len = <span class="self">self</span>.bytes.len();
 <a href=#194 id=194 data-nosnippet>194</a>        <span class="kw">let </span>alloc = <span class="kw">unsafe </span>{ libc::malloc(len) };
@@ -211,14 +211,14 @@
 <a href=#211 id=211 data-nosnippet>211</a>}
 <a href=#212 id=212 data-nosnippet>212</a>
 <a href=#213 id=213 data-nosnippet>213</a><span class="kw">impl </span>ToOsStr <span class="kw">for </span>str {
-<a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">fn </span>to_os_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr, Error&gt; {
+<a href=#214 id=214 data-nosnippet>214</a>    <span class="kw">fn </span>to_os_str(<span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr&lt;<span class="lifetime">'_</span>&gt;, Error&gt; {
 <a href=#215 id=215 data-nosnippet>215</a>        make_os_str(<span class="self">self</span>.as_bytes())
 <a href=#216 id=216 data-nosnippet>216</a>    }
 <a href=#217 id=217 data-nosnippet>217</a>}
 <a href=#218 id=218 data-nosnippet>218</a>
 <a href=#219 id=219 data-nosnippet>219</a><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 <a href=#220 id=220 data-nosnippet>220</a></span><span class="kw">impl </span>ToOsStr <span class="kw">for </span>ffi::OsStr {
-<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">fn </span>to_os_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr, Error&gt; {
+<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">fn </span>to_os_str(<span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr&lt;<span class="lifetime">'_</span>&gt;, Error&gt; {
 <a href=#222 id=222 data-nosnippet>222</a>        make_os_str(<span class="self">self</span>.as_bytes())
 <a href=#223 id=223 data-nosnippet>223</a>    }
 <a href=#224 id=224 data-nosnippet>224</a>}
@@ -226,7 +226,7 @@
 <a href=#226 id=226 data-nosnippet>226</a><span class="doccomment">/// Path must not contain a nul-byte in the middle, but a nul-byte in the end
 <a href=#227 id=227 data-nosnippet>227</a>/// (and only in the end) is allowed, which in this case no extra allocation
 <a href=#228 id=228 data-nosnippet>228</a>/// will be made. Otherwise, an extra allocation is made.
-<a href=#229 id=229 data-nosnippet>229</a></span><span class="kw">fn </span>make_os_str(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr, Error&gt; {
+<a href=#229 id=229 data-nosnippet>229</a></span><span class="kw">fn </span>make_os_str&lt;<span class="lifetime">'a</span>&gt;(slice: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;EitherOsStr&lt;<span class="lifetime">'a</span>&gt;, Error&gt; {
 <a href=#230 id=230 data-nosnippet>230</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>last, init)) = slice.split_last() {
 <a href=#231 id=231 data-nosnippet>231</a>        <span class="kw">if </span>init.contains(<span class="kw-2">&amp;</span><span class="number">0</span>) {
 <a href=#232 id=232 data-nosnippet>232</a>            <span class="macro">panic!</span>(<span class="string">"Path to file cannot contain nul-byte in the middle"</span>);
@@ -285,7 +285,7 @@
 <a href=#285 id=285 data-nosnippet>285</a>
 <a href=#286 id=286 data-nosnippet>286</a><span class="doccomment">/// Writes data into the given open file.
 <a href=#287 id=287 data-nosnippet>287</a></span><span class="kw">pub fn </span>write(fd: FileDesc, <span class="kw-2">mut </span>bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-<a href=#288 id=288 data-nosnippet>288</a>    <span class="kw">while </span>bytes.len() &gt; <span class="number">0 </span>{
+<a href=#288 id=288 data-nosnippet>288</a>    <span class="kw">while </span>!bytes.is_empty() {
 <a href=#289 id=289 data-nosnippet>289</a>        <span class="kw">let </span>written = <span class="kw">unsafe </span>{
 <a href=#290 id=290 data-nosnippet>290</a>            libc::write(fd, bytes.as_ptr() <span class="kw">as </span><span class="kw-2">*const </span>libc::c_void, bytes.len())
 <a href=#291 id=291 data-nosnippet>291</a>        };
